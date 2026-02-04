@@ -1,0 +1,43 @@
+services:
+
+  db:
+    container_name: indexer-db
+    image: postgres:latest
+    restart: always
+    # set shared memory limit when using docker compose
+    shm_size: 256mb
+    env_file:
+      - .env
+    ports:
+      - 5151:5432
+    volumes:
+      - indexer-data:/var/lib/postgresql
+  
+  redis:
+    container_name: indexer-redis
+    image: redis:8.4-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server 
+      --maxmemory 128mb
+      --save 30 1
+      --loglevel warning
+      --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: "5s"
+      timeout: "3s"
+      retries: 10
+    volumes: 
+      - indexer-redis:/data
+
+
+volumes:
+  indexer-data:
+  indexer-redis:
+
+
+
+
