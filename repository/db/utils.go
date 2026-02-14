@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/domain"
+	"github/ijusttookadnatest/indexer-evm/core/domain"
 
 	"github.com/lib/pq"
 )
@@ -104,7 +104,7 @@ func scanEvent(row *sql.Rows) (*domain.Event,error) {
 		&event.LogIndex,
 		&event.TxHash,
 		&event.Emitter,
-		pq.Array(&event.Datas),
+		&event.Datas,
 		pq.Array(&event.Topics),
 	)
 	if err != nil {

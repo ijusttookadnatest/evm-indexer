@@ -18,7 +18,7 @@
   -- Events liés aux transactions
   INSERT INTO events (block_id, log_index, tx_hash, emitter, datas, topics)
   VALUES
-      (100, 0, '0xtx2', '0xContract', '{"0xdata1"}',
+      (100, 0, '0xtx2', '0xContract', '"0xdata1"',
   '{"0xTransferSig","0xAlice","0xBob"}'),
-      (100, 1, '0xtx2', '0xContract', '{"0xdata2"}',
+      (100, 1, '0xtx2', '0xContract', '"0xdata2"',
   '{"0xApprovalSig","0xAlice"}');

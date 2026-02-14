@@ -5,7 +5,7 @@ type Event struct {
     TxHash string
     LogIndex uint64
     Emitter string
-    Datas []string
+    Datas string
     Topics []string
 }
 
@@ -19,8 +19,13 @@ type Block struct {
     Timestamp uint64
 }
 
+type BlockTxs struct {
+    Block Block
+    Txs []Transaction
+}
+
 type Transaction struct {
-    BlockId int
+    BlockId uint64
 	Hash string
 	From string
 	To *string
@@ -40,7 +45,7 @@ type TransactionFilter struct {
 type EventFilter struct {
     TxHash *string
     Emitter *string
-    Topics *[]string
+    Topics []string
     FromBlock  *uint64
     ToBlock *uint64
     Limit *int

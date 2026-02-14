@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/domain"
+	"github/ijusttookadnatest/indexer-evm/core/domain"
 
 	"github.com/lib/pq"
 )

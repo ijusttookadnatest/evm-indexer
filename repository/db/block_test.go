@@ -4,7 +4,7 @@ package repository
 
 import (
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/domain"
+	"github/ijusttookadnatest/indexer-evm/core/domain"
 	"testing"
 )
 
@@ -15,7 +15,7 @@ func TestGetByNumber_Integration(t *testing.T) {
 	repo := NewBlockRepository(testDB)
 
 	t.Run("valid block", func(t *testing.T) {
-		block, err := repo.GetByNumber(100)
+		block, err := repo.GetById(100)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -28,7 +28,7 @@ func TestGetByNumber_Integration(t *testing.T) {
 	})
 
 	t.Run("no block", func(t *testing.T) {
-		_, err := repo.GetByNumber(999)
+		_, err := repo.GetById(999)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -75,7 +75,7 @@ func TestGetByRangeNumber_Integration(t *testing.T) {
 	repo := NewBlockRepository(testDB)
 
 	t.Run("valid range with results", func(t *testing.T) {
-		blocks, err := repo.GetByRangeNumber(99, 103)
+		blocks, err := repo.GetByRangeId(99, 103)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -88,7 +88,7 @@ func TestGetByRangeNumber_Integration(t *testing.T) {
 	})
 
 	t.Run("range with one result", func(t *testing.T) {
-		blocks, err := repo.GetByRangeNumber(99, 101)
+		blocks, err := repo.GetByRangeId(99, 101)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -101,7 +101,7 @@ func TestGetByRangeNumber_Integration(t *testing.T) {
 	})
 
 	t.Run("empty range", func(t *testing.T) {
-		_, err := repo.GetByRangeNumber(500, 600)
+		_, err := repo.GetByRangeId(500, 600)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -166,7 +166,7 @@ func TestCreate_Integration(t *testing.T) {
 			{BlockId: 200, Hash: "0xnewtx1", From: "0xAlice", To: &to, GasUsed: 21000},
 		}
 		events := []domain.Event{
-			{BlockId: 200, LogIndex: 0, TxHash: "0xnewtx1", Emitter: "0xContract", Datas: []string{"0xdata"}, Topics: []string{"0xTopic"}},
+			{BlockId: 200, LogIndex: 0, TxHash: "0xnewtx1", Emitter: "0xContract", Datas: "0xdata", Topics: []string{"0xTopic"}},
 		}
 
 		err := repo.Create(block, txs, events)
@@ -175,7 +175,7 @@ func TestCreate_Integration(t *testing.T) {
 		}
 
 		// Verify block was persisted
-		got, err := repo.GetByNumber(200)
+		got, err := repo.GetById(200)
 		if err != nil {
 			t.Fatalf("block should exist: %v", err)
 		}
@@ -212,7 +212,7 @@ func TestDelete_Integration(t *testing.T) {
 		}
 
 		// Verify block is gone
-		_, err = repo.GetByNumber(100)
+		_, err = repo.GetById(100)
 		if err == nil {
 			t.Fatal("block should be deleted")
 		}

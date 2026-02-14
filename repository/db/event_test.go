@@ -4,7 +4,7 @@ package repository
 
 import (
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/domain"
+	"github/ijusttookadnatest/indexer-evm/core/domain"
 	"testing"
 )
 
@@ -83,7 +83,7 @@ func TestGetByEventFilter_Integration(t *testing.T) {
 
 	t.Run("filter by topics", func(t *testing.T) {
 		topics := []string{"0xTransferSig"}
-		filter := domain.EventFilter{Topics: &topics}
+		filter := domain.EventFilter{Topics: topics}
 		events, err := repo.GetByEventFilter(filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
@@ -99,7 +99,7 @@ func TestGetByEventFilter_Integration(t *testing.T) {
 	t.Run("filter by emitter and topics", func(t *testing.T) {
 		emitter := "0xContract"
 		topics := []string{"0xApprovalSig"}
-		filter := domain.EventFilter{Emitter: &emitter, Topics: &topics}
+		filter := domain.EventFilter{Emitter: &emitter, Topics: topics}
 		events, err := repo.GetByEventFilter(filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)

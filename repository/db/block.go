@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/domain"
+	"github/ijusttookadnatest/indexer-evm/core/domain"
 
 	"github.com/lib/pq"
 )
@@ -15,12 +15,12 @@ func NewBlockRepository(db *sql.DB) *BlockRepository {
 	return &BlockRepository{db :db}
 }
 
-func (repo *BlockRepository) GetByNumber(number uint64) (*domain.Block,error) {
+func (repo *BlockRepository) GetById(id uint64) (*domain.Block,error) {
 	rows, err := repo.db.Query(`
 		SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp
 		FROM blocks 
 		WHERE block_id = $1;
-	`, number)
+	`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (repo *BlockRepository) GetByHash(hash string) (*domain.Block,error) {
 	return &blocks[0], nil
 }
 
-func (repo *BlockRepository) GetByRangeNumber(from, to uint64) ([]domain.Block,error) {
+func (repo *BlockRepository) GetByRangeId(from, to uint64) ([]domain.Block,error) {
 	rows, err := repo.db.Query(`
 		SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp
 		FROM blocks 
@@ -122,7 +122,7 @@ func (repo *BlockRepository) Create(block domain.Block, txs []domain.Transaction
 	}
 	defer stmtEvent.Close()
 	for _, event := range  events {
-		_, err = stmtEvent.Exec(event.BlockId, event.LogIndex, event.TxHash, event.Emitter, pq.Array(event.Datas), pq.Array(event.Topics))
+		_, err = stmtEvent.Exec(event.BlockId, event.LogIndex, event.TxHash, event.Emitter, event.Datas, pq.Array(event.Topics))
 		if err != nil {
 			return err
 		}
