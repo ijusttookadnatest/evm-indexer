@@ -1,0 +1,47 @@
+package domain
+
+type Event struct {
+    BlockId uint64
+    TxHash string
+    LogIndex uint64
+    Emitter string
+    Datas []string
+    Topics []string
+}
+
+type Block struct {
+	Hash string
+    Id uint64
+    ParentHash string
+    GasLimit uint64
+    GasUsed uint64
+    Miner string
+    Timestamp uint64
+}
+
+type Transaction struct {
+    BlockId int
+	Hash string
+	From string
+	To *string
+	GasUsed uint64
+}
+
+type TransactionFilter struct {
+    BlockId *uint64
+	Hash *string
+	From *string
+	To *string
+    FromBlock *uint64
+    ToBlock *uint64
+    Limit *int
+}
+
+type EventFilter struct {
+    TxHash *string
+    Emitter *string
+    Topics *[]string
+    FromBlock  *uint64
+    ToBlock *uint64
+    Limit *int
+}

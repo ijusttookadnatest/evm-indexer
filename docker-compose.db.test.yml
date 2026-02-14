@@ -1,0 +1,23 @@
+services:
+
+  db-test:
+    container_name: indexer-db-test
+    image: postgres:latest
+    restart: always
+    # set shared memory limit when using docker compose
+    shm_size: 256mb
+    environment:
+        - POSTGRES_DB=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_USER=postgres
+    ports:
+      - 5152:5432
+    volumes:
+      - indexer-data-test:/var/lib/postgresql
+
+volumes:
+  indexer-data-test:
+
+
+
+
