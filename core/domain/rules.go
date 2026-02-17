@@ -92,7 +92,7 @@ func ParseTopics(topics []string) error {
 	return nil
 }
 
-func ValidateBlockRange(fromBlock, toBlock uint64, rangeMax uint) error {
+func ValidateBlockRange(fromBlock, toBlock uint64, rangeMax uint64) error {
 	if fromBlock == 0 || toBlock == 0 {
 		return ErrInvalidBlockRange
 	}
