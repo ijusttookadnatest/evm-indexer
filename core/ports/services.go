@@ -3,16 +3,15 @@ package ports
 import "github/ijusttookadnatest/indexer-evm/core/domain"
 
 type QueryService interface {
+	GetBlockByHash(hash string, tx bool) (*domain.BlockTxs,error)
+	GetBlockById(id uint64, tx bool) (*domain.BlockTxs,error)
+	GetBlocksByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs,error)
+	GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs,error)
 	
-	GetByHash(hash string, tx bool) (*domain.BlockTxs,error)
-	GetById(id uint64, tx bool) (*domain.BlockTxs,error)
-	GetByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs,error)
-	GetByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs,error)
-	
-	GetByTransactionFilter(filter domain.TransactionFilter) ([]domain.Transaction,error)
+	GetTransactionByFilter(filter domain.TransactionFilter) ([]domain.Transaction,error)
 
-	GetByEventFilter(filter domain.EventFilter) ([]domain.Event,error)
-	GetByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error)
+	GetEventByFilter(filter domain.EventFilter) ([]domain.Event,error)
+	GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error)
 }
 
 type IndexerService interface {

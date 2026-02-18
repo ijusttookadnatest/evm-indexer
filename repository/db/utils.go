@@ -7,6 +7,24 @@ import (
 	"github.com/lib/pq"
 )
 
+func fetchBlocksTxs(rows *sql.Rows) ([]domain.Block,error) {
+	blocks := []domain.Block{}
+	for rows.Next() {
+		block, err := scanBlock(rows)
+		if err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, *block)
+	}
+	if err := rows.Err() ; err != nil {
+		return nil, err
+	}
+	rows.Close()
+	if len(blocks) == 0 {
+		return nil, domain.ErrNotFound
+	}
+	return blocks, nil
+}
 
 func fetchBlocks(rows *sql.Rows) ([]domain.Block,error) {
 	blocks := []domain.Block{}

@@ -19,11 +19,11 @@ func NewQueryService(repo ports.QueryRepository, rangeMaxId uint64, rangeMaxTime
 	}
 }
 
-func (service *QueryService) GetByHash(hash string, tx bool) (*domain.BlockTxs,error) {
+func (service *QueryService) GetBlockByHash(hash string, tx bool) (*domain.BlockTxs,error) {
 	if err := domain.ParseHash(hash) ; err != nil {
 		return nil, err
 	}
-	blockData, err := service.repo.GetByHash(hash)
+	blockData, err := service.repo.GetBlockByHash(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (service *QueryService) GetByHash(hash string, tx bool) (*domain.BlockTxs,e
 	var txs []domain.Transaction
 	if tx {
 		filter := domain.TransactionFilter{BlockId: &blockData.Id}
-		txs, err = service.repo.GetByTransactionFilter(filter)
+		txs, err = service.repo.GetTransactionByFilter(filter)
 		if err != nil {
 			return nil, err
 		}
@@ -42,11 +42,11 @@ func (service *QueryService) GetByHash(hash string, tx bool) (*domain.BlockTxs,e
 	}, nil
 }
 
-func (service *QueryService) GetById(id uint64, tx bool) (*domain.BlockTxs,error) {
+func (service *QueryService) GetBlockById(id uint64, tx bool) (*domain.BlockTxs,error) {
 	if id == 0 {
 		return nil, domain.ErrInvalidId
 	}
-	blockData, err := service.repo.GetById(id)
+	blockData, err := service.repo.GetBlockById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (service *QueryService) GetById(id uint64, tx bool) (*domain.BlockTxs,error
 	var txs []domain.Transaction
 	if tx {
 		filter := domain.TransactionFilter{BlockId: &blockData.Id}
-		txs, err = service.repo.GetByTransactionFilter(filter)
+		txs, err = service.repo.GetTransactionByFilter(filter)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +65,15 @@ func (service *QueryService) GetById(id uint64, tx bool) (*domain.BlockTxs,error
 	}, nil
 }
 
-func (service *QueryService) GetByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs,error) {
+func aggregateBlocksId(blocksData []domain.Block) []uint64 {
+	blocksId := make([]uint64, len(blocksData))
+	for i := range blocksData {
+		blocksId[i] = blocksData[i].Id
+	}
+	return blocksId
+}
+
+func (service *QueryService) GetBlocksByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs,error) {
 	if to == 0 {
 		return nil, domain.ErrInvalidId
 	}
@@ -76,31 +84,40 @@ func (service *QueryService) GetByRangeId(from, to uint64, tx bool) ([]domain.Bl
 		return nil, domain.ErrInvalidId
 	}
 
-	blocksData, err := service.repo.GetByRangeId(from, to)
+	blocksData, err := service.repo.GetBlocksByRangeId(from, to)
 	if err != nil {
 		return nil, err
 	}
 
 	var blocks = make([]domain.BlockTxs, len(blocksData))
 
-	for i, blockData := range blocksData {
-		var txs []domain.Transaction
-		if (tx) {
-			filter := domain.TransactionFilter{BlockId: &blockData.Id}
-			txs, err = service.repo.GetByTransactionFilter(filter)
-			if err != nil {
-				return nil, err
-			}
+	blocksId := aggregateBlocksId(blocksData)
+	
+	var txs []domain.Transaction
+	if (tx) {
+		txs, err = service.repo.GetTransactionsByBatchBlocksId(blocksId)
+		if err != nil {
+			return nil, err
 		}
+	}
+
+	mTxs := make(map[uint64][]domain.Transaction, len(blocksData))
+	for _, tx := range txs {
+		id := tx.BlockId
+		mTxs[id] = append(mTxs[id], tx)
+	}
+
+	for i, blockData := range blocksData {
+		id := blockData.Id
 		blocks[i] = domain.BlockTxs{
 			Block: blockData,
-			Txs: txs,
+			Txs: mTxs[id],
 		}
 	}
 	return blocks, nil
 }
 
-func (service *QueryService) GetByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs,error) {
+func (service *QueryService) GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs,error) {
 	if from == 0 || to == 0{
 		return nil, domain.ErrInvalidId
 	}
@@ -111,32 +128,39 @@ func (service *QueryService) GetByRangeTime(from, to uint64, tx bool) ([]domain.
 		return nil, domain.ErrInvalidId
 	}
 
-	blocksData, err := service.repo.GetByRangeTime(from, to)
+	blocksData, err := service.repo.GetBlocksByRangeTime(from, to)
 	if err != nil {
 		return nil, err
 	}
 
 	var blocks = make([]domain.BlockTxs, len(blocksData))
-	
-	for i, blockData := range blocksData {
-		var txs []domain.Transaction
-		if (tx) {
-			filter := domain.TransactionFilter{BlockId: &blockData.Id}
-			txs, err = service.repo.GetByTransactionFilter(filter)
-			if err != nil {
-				return nil, err
-			}
+	blocksId := aggregateBlocksId(blocksData)
+	var txs []domain.Transaction
+	if (tx) {
+		txs, err = service.repo.GetTransactionsByBatchBlocksId(blocksId)
+		if err != nil {
+			return nil, err
 		}
+	}
+
+	mTxs := make(map[uint64][]domain.Transaction, len(blocksData))
+	for _, tx := range txs {
+		id := tx.BlockId
+		mTxs[id] = append(mTxs[id], tx)
+	}
+
+	for i, blockData := range blocksData {
+		id := blockData.Id
 		blocks[i] = domain.BlockTxs{
 			Block: blockData,
-			Txs: txs,
+			Txs: mTxs[id],
 		}
 	}
 	return blocks, nil
 }
 
 
-func (service *QueryService) GetByEventFilter(filter domain.EventFilter) ([]domain.Event,error) {
+func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event,error) {
 	if filter.Emitter == nil && filter.TxHash == nil && filter.FromBlock == nil && len(filter.Topics) == 0 && filter.Limit == nil && filter.ToBlock == nil {
 		return nil, domain.ErrEmptyFilter
 	}
@@ -166,28 +190,28 @@ func (service *QueryService) GetByEventFilter(filter domain.EventFilter) ([]doma
 			return nil, err
 		}
 	}
-	events, err := service.repo.GetByEventFilter(filter)
+	events, err := service.repo.GetEventByFilter(filter)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (service *QueryService) GetByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error) {
+func (service *QueryService) GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error) {
 	if err := domain.ParseHash(hash) ; err != nil {
 		return nil, err
 	}
 	if logIndex < 0 {
 		return nil, domain.ErrInvalidId
 	}
-	event, err := service.repo.GetByTxHashLogIndex(hash, logIndex)
+	event, err := service.repo.GetEventByTxHashLogIndex(hash, logIndex)
 	if err != nil {
 		return nil, err
 	}
 	return event, nil
 }
 
-func (service *QueryService) GetByTransactionFilter(filter domain.TransactionFilter) ([]domain.Transaction,error) {
+func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction,error) {
 	if filter.Hash == nil && filter.BlockId == nil && filter.FromBlock == nil && filter.From == nil && filter.To == nil {
 		return nil, domain.ErrEmptyFilter
 	}
@@ -221,7 +245,7 @@ func (service *QueryService) GetByTransactionFilter(filter domain.TransactionFil
 			return nil, err
 		}
 	}
-	tsx, err := service.repo.GetByTransactionFilter(filter)
+	tsx, err := service.repo.GetTransactionByFilter(filter)
 	if err != nil {
 		return nil, err
 	}

@@ -27,10 +27,10 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 	var block *domain.BlockTxs
 
 	switch blockDTO.groupParam {
-		case IdParam: block, err = handler.service.GetById(blockDTO.id, blockDTO.tx)
-		case HashParam: block, err = handler.service.GetByHash(blockDTO.hash, blockDTO.tx)
-		case FromToBlockParam: blocks, err = handler.service.GetByRangeId(blockDTO.fromBlock, blockDTO.toBlock, blockDTO.tx)
-		case FromToTimeParam: blocks, err = handler.service.GetByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
+		case IdParam: block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
+		case HashParam: block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
+		case FromToBlockParam: blocks, err = handler.service.GetBlocksByRangeId(blockDTO.fromBlock, blockDTO.toBlock, blockDTO.tx)
+		case FromToTimeParam: blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
 	}
 
 	if err != nil {
@@ -54,7 +54,7 @@ func (handler *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := handler.service.GetByEventFilter(filter)
+	events, err := handler.service.GetEventByFilter(filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return
@@ -81,7 +81,7 @@ func (handler *Handler) GetEventByTxLog(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	event, err := handler.service.GetByTxHashLogIndex(txHash, logIndex)
+	event, err := handler.service.GetEventByTxHashLogIndex(txHash, logIndex)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return
@@ -98,7 +98,7 @@ func (handler *Handler) GetTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	txs, err := handler.service.GetByTransactionFilter(filter)
+	txs, err := handler.service.GetTransactionByFilter(filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return

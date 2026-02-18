@@ -3,16 +3,17 @@ package ports
 import "github/ijusttookadnatest/indexer-evm/core/domain"
 
 type QueryRepository interface {
+	GetBlockByHash(hash string) (*domain.Block,error)
+	GetBlockById(id uint64) (*domain.Block,error)
+	GetBlocksByRangeId(from, to uint64) ([]domain.Block,error)
+	GetBlocksByRangeTime(from, to uint64) ([]domain.Block,error)
 	
-	GetByHash(hash string) (*domain.Block,error)
-	GetById(id uint64) (*domain.Block,error)
-	GetByRangeId(from, to uint64) ([]domain.Block,error)
-	GetByRangeTime(from, to uint64) ([]domain.Block,error)
+	GetTransactionByFilter(filter domain.TransactionFilter) ([]domain.Transaction,error)
+	GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction,error)
 	
-	GetByTransactionFilter(filter domain.TransactionFilter) ([]domain.Transaction,error)
-
-	GetByEventFilter(filter domain.EventFilter) ([]domain.Event,error)
-	GetByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error)
+	GetEventByFilter(filter domain.EventFilter) ([]domain.Event,error)
+	GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event,error)
+	GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event,error)
 }
 
 type IndexerRepository interface {
