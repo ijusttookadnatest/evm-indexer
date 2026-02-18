@@ -1,0 +1,53 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Uint64
+
+type Block {
+  id: Uint64!
+  hash: String!
+  parentHash: String!
+  gasLimit: Uint64!
+  gasUsed: Uint64!
+  miner: String!
+  timestamp: Uint64!
+  transactions: [Transaction!]!
+}
+
+type Transaction {
+  hash: String!
+  from: String!
+  to: String
+  gasUsed: Uint64!
+  events: [Event!]!
+}
+
+type Event {
+  logIndex: Uint64!
+  emitter: String!
+  data: String
+  topics: [String!]!
+}
+
+input BlockFilter {
+  id: Uint64
+  fromTime: Uint64
+  toTime: Uint64
+}
+
+input TransactionFilter {
+  to: String
+  from: String
+}
+
+input EventFilter {
+  emitter: String
+  topics: [String]!
+}
+
+type Query {
+  blocks(filter: BlockFilter): [Block]!
+  transactions(filter: TransactionFilter): [Transaction]!
+  events(filter: EventFilter): [Event]!
+}

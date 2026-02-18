@@ -1,0 +1,51 @@
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - graph/*.graphqls
+
+exec:
+  package: graph
+  layout: single-file # Only other option is "follow-schema," ie multi-file.
+  filename: graph/generated.go
+model:
+  filename: graph/dto/dto_gen.go
+  package: dto
+resolver:
+  package: graph
+  layout: follow-schema # Only other option is "single-file."
+  dir: graph
+  filename_template: "{name}.resolvers.go"
+call_argument_directives_with_null: true
+autobind:
+#  - "github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+
+  Uint64:
+    model:
+      - github.com/99designs/gqlgen/graphql.Uint64
+  UUID:
+    model:
+      - github.com/99designs/gqlgen/graphql.UUID
+
+  # The GraphQL spec explicitly states that the Int type is a signed 32-bit
+  # integer. Using Go int or int64 to represent it can lead to unexpected
+  # behavior, and some GraphQL tools like Apollo Router will fail when
+  # communicating numbers that overflow 32-bits.
+  #
+  # You may choose to use the custom, built-in Int64 scalar to represent 64-bit
+  # integers, or ignore the spec and bind Int to graphql.Int / graphql.Int64
+  # (the default behavior of gqlgen). This is fine in simple use cases when you
+  # do not need to worry about interoperability and only expect small numbers.
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int32
+  Int64:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
