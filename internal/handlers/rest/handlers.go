@@ -2,8 +2,8 @@ package rest
 
 import (
 	"encoding/json"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
-	"github/ijusttookadnatest/indexer-evm/core/ports"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 	"net/http"
 	"strconv"
 )
@@ -13,13 +13,13 @@ type Handler struct {
 }
 
 func NewHandler(service ports.QueryService) *Handler {
-	return &Handler{ service: service }
+	return &Handler{service: service}
 }
 
 func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 	blockDTO, err := extractBlockDTO(r)
 	if err != nil {
-		http.Error(w,"invalid query parameters", http.StatusBadRequest)
+		http.Error(w, "invalid query parameters", http.StatusBadRequest)
 		return
 	}
 
@@ -27,10 +27,14 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 	var block *domain.BlockTxs
 
 	switch blockDTO.groupParam {
-		case IdParam: block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
-		case HashParam: block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
-		case FromToBlockParam: blocks, err = handler.service.GetBlocksByRangeId(blockDTO.fromBlock, blockDTO.toBlock, blockDTO.tx)
-		case FromToTimeParam: blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
+	case IdParam:
+		block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
+	case HashParam:
+		block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
+	case FromToBlockParam:
+		blocks, err = handler.service.GetBlocksByRangeId(blockDTO.fromBlock, blockDTO.toBlock, blockDTO.tx)
+	case FromToTimeParam:
+		blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
 	}
 
 	if err != nil {
@@ -45,7 +49,6 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(blocks)
 }
-
 
 func (handler *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	filter, err := extractEventFilter(r)
@@ -103,7 +106,7 @@ func (handler *Handler) GetTransaction(w http.ResponseWriter, r *http.Request) {
 		writeResErrorToHTTP(err, w)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(txs)
 }

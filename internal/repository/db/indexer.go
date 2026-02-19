@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 
 	"github.com/lib/pq"
 )
@@ -12,9 +12,8 @@ type IndexerRepository struct {
 }
 
 func NewIndexerRepository(db *sql.DB) *IndexerRepository {
-	return &IndexerRepository{db :db}
+	return &IndexerRepository{db: db}
 }
-
 
 func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transaction, events []domain.Event) error {
 	tx, err := repo.db.Begin()
@@ -54,13 +53,13 @@ func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transacti
 		return err
 	}
 	defer stmtEvent.Close()
-	for _, event := range  events {
+	for _, event := range events {
 		_, err = stmtEvent.Exec(event.BlockId, event.LogIndex, event.TxHash, event.Emitter, event.Datas, pq.Array(event.Topics))
 		if err != nil {
 			return err
 		}
 	}
-	
+
 	tx.Commit()
 	return nil
 }

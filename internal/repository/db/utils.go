@@ -2,12 +2,12 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 
 	"github.com/lib/pq"
 )
 
-func fetchBlocksTxs(rows *sql.Rows) ([]domain.Block,error) {
+func fetchBlocksTxs(rows *sql.Rows) ([]domain.Block, error) {
 	blocks := []domain.Block{}
 	for rows.Next() {
 		block, err := scanBlock(rows)
@@ -16,7 +16,7 @@ func fetchBlocksTxs(rows *sql.Rows) ([]domain.Block,error) {
 		}
 		blocks = append(blocks, *block)
 	}
-	if err := rows.Err() ; err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	rows.Close()
@@ -26,7 +26,7 @@ func fetchBlocksTxs(rows *sql.Rows) ([]domain.Block,error) {
 	return blocks, nil
 }
 
-func fetchBlocks(rows *sql.Rows) ([]domain.Block,error) {
+func fetchBlocks(rows *sql.Rows) ([]domain.Block, error) {
 	blocks := []domain.Block{}
 	for rows.Next() {
 		block, err := scanBlock(rows)
@@ -35,7 +35,7 @@ func fetchBlocks(rows *sql.Rows) ([]domain.Block,error) {
 		}
 		blocks = append(blocks, *block)
 	}
-	if err := rows.Err() ; err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	rows.Close()
@@ -45,7 +45,7 @@ func fetchBlocks(rows *sql.Rows) ([]domain.Block,error) {
 	return blocks, nil
 }
 
-func fetchTxs(rows *sql.Rows) ([]domain.Transaction,error) {
+func fetchTxs(rows *sql.Rows) ([]domain.Transaction, error) {
 	txs := []domain.Transaction{}
 	for rows.Next() {
 		tx, err := scanTx(rows)
@@ -54,7 +54,7 @@ func fetchTxs(rows *sql.Rows) ([]domain.Transaction,error) {
 		}
 		txs = append(txs, *tx)
 	}
-	if err := rows.Err() ; err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	rows.Close()
@@ -64,7 +64,7 @@ func fetchTxs(rows *sql.Rows) ([]domain.Transaction,error) {
 	return txs, nil
 }
 
-func fetchEvents(rows *sql.Rows) ([]domain.Event,error) {
+func fetchEvents(rows *sql.Rows) ([]domain.Event, error) {
 	events := []domain.Event{}
 	for rows.Next() {
 		event, err := scanEvent(rows)
@@ -73,7 +73,7 @@ func fetchEvents(rows *sql.Rows) ([]domain.Event,error) {
 		}
 		events = append(events, *event)
 	}
-	if err := rows.Err() ; err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	rows.Close()
@@ -83,7 +83,7 @@ func fetchEvents(rows *sql.Rows) ([]domain.Event,error) {
 	return events, nil
 }
 
-func scanBlock(row *sql.Rows) (*domain.Block,error) {
+func scanBlock(row *sql.Rows) (*domain.Block, error) {
 	block := new(domain.Block)
 	err := row.Scan(
 		&block.Hash,
@@ -100,7 +100,7 @@ func scanBlock(row *sql.Rows) (*domain.Block,error) {
 	return block, nil
 }
 
-func scanTx(row *sql.Rows) (*domain.Transaction,error) {
+func scanTx(row *sql.Rows) (*domain.Transaction, error) {
 	tx := new(domain.Transaction)
 	err := row.Scan(
 		&tx.BlockId,
@@ -115,7 +115,7 @@ func scanTx(row *sql.Rows) (*domain.Transaction,error) {
 	return tx, nil
 }
 
-func scanEvent(row *sql.Rows) (*domain.Event,error) {
+func scanEvent(row *sql.Rows) (*domain.Event, error) {
 	event := new(domain.Event)
 	err := row.Scan(
 		&event.BlockId,

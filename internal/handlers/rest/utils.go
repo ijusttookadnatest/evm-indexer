@@ -2,7 +2,7 @@ package rest
 
 import (
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"net/http"
 	"strconv"
 )
@@ -143,7 +143,6 @@ func extractEventFilter(r *http.Request) (domain.EventFilter, error) {
 
 	return filter, nil
 }
-
 
 func writeResErrorToHTTP(err error, w http.ResponseWriter) {
 	if errors.Is(err, domain.ErrNotFound) {

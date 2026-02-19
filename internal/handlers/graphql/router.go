@@ -3,8 +3,8 @@ package graphql
 import (
 	"net/http"
 
-	"github/ijusttookadnatest/indexer-evm/core/ports"
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph"
+	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -15,13 +15,13 @@ import (
 )
 
 func NewHandler(service ports.QueryService) *handler.Server {
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service:service}}))
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service: service}}))
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
-	
+
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
-	
+
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
@@ -37,7 +37,7 @@ func NewRouter(service ports.QueryService, playgroundEnabled bool) http.Handler 
 	if playgroundEnabled {
 		mux.Handle("/graphql/playground", playground.Handler("GraphQL playground", "/graphql/playground"))
 	}
-	mux.Handle("/graphql",  graph.Middleware(service, srv))
+	mux.Handle("/graphql", graph.Middleware(service, srv))
 
 	return mux
 }

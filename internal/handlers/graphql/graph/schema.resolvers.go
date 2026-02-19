@@ -8,8 +8,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
 )
 
 // Transactions is the resolver for the transactions field.
@@ -94,7 +94,6 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 	}
 	return dtoEvents, nil
 }
-
 
 // Block returns BlockResolver implementation.
 func (r *Resolver) Block() BlockResolver { return &blockResolver{r} }

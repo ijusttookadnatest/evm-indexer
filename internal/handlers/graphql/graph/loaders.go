@@ -2,8 +2,8 @@ package graph
 
 import (
 	"context"
-	"github/ijusttookadnatest/indexer-evm/core/ports"
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
 	"net/http"
 	"time"
 
@@ -30,9 +30,9 @@ func (r *transactionsReader) getBatchTransactions(ctx context.Context, blockIDs 
 	if err != nil {
 		return handleError[[]*dto.Transaction](len(blockIDs), err)
 	}
-	
+
 	i := 0
-	result := make([]*dataloader.Result[[]*dto.Transaction],len(blockIDs))
+	result := make([]*dataloader.Result[[]*dto.Transaction], len(blockIDs))
 	for _, val := range mTxs {
 		txsPerBlockID := make([]*dto.Transaction, len(val))
 		for j, tx := range val {
@@ -53,9 +53,9 @@ func (r *eventsReader) getBatchEvents(ctx context.Context, txHashs []string) []*
 	if err != nil {
 		return handleError[[]*dto.Event](len(txHashs), err)
 	}
-	
+
 	i := 0
-	result := make([]*dataloader.Result[[]*dto.Event],len(txHashs))
+	result := make([]*dataloader.Result[[]*dto.Event], len(txHashs))
 	for _, val := range mEvents {
 		eventsByTxHash := make([]*dto.Event, len(val))
 		for j, tx := range val {

@@ -16,7 +16,7 @@ resolver:
   filename_template: "{name}.resolvers.go"
 call_argument_directives_with_null: true
 autobind:
-#  - "github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
+#  - "github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
 
 models:
   ID:

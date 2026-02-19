@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"github/ijusttookadnatest/indexer-evm/core/domain"
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
 )
 
 func toBlockDTO(b domain.BlockTxs) *dto.Block {

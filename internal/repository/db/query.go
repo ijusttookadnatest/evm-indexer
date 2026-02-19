@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github/ijusttookadnatest/indexer-evm/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 
 	"github.com/lib/pq"
 )
@@ -12,10 +12,10 @@ type QueryRepository struct {
 }
 
 func NewQueryRepository(db *sql.DB) *QueryRepository {
-	return &QueryRepository{db :db}
+	return &QueryRepository{db: db}
 }
 
-func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block,error) {
+func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block, error) {
 	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_id = $1;`, id)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block,error) {
 	return &blocks[0], nil
 }
 
-func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block,error) {
+func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block, error) {
 	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_hash = $1;`, hash)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block,error) {
 	return &blocks[0], nil
 }
 
-func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block,error) {
+func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block, error) {
 	rows, err := repo.db.Query(`SELECT * FROM blocks  WHERE block_id > $1 AND block_id < $2;`, from, to)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block
 	return fetchBlocks(rows)
 }
 
-func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Block,error) {
+func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Block, error) {
 	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_timestamp > $1 AND block_timestamp < $2;`, from, to)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Blo
 	return fetchBlocks(rows)
 }
 
-func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event,error) {
+func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error) {
 	rows, err := repo.db.Query(`
 		SELECT *
 		FROM events
@@ -77,7 +77,7 @@ func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]dom
 	return fetchEvents(rows)
 }
 
-func (repo *QueryRepository) GetEventsByTxHashLogIndex(txHash string, logIndex int) ([]domain.Event,error) {
+func (repo *QueryRepository) GetEventsByTxHashLogIndex(txHash string, logIndex int) ([]domain.Event, error) {
 	rows, err := repo.db.Query(`SELECT * FROM events  WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
 	if err != nil {
 		return nil, err
@@ -86,8 +86,7 @@ func (repo *QueryRepository) GetEventsByTxHashLogIndex(txHash string, logIndex i
 	return fetchEvents(rows)
 }
 
-
-func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction,error) {
+func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {
 	rows, err := repo.db.Query(`
 		SELECT *
 		FROM transactions
@@ -107,7 +106,7 @@ func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFi
 	return fetchTxs(rows)
 }
 
-func (repo *QueryRepository) GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction,error) {
+func (repo *QueryRepository) GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction, error) {
 	rows, err := repo.db.Query(`SELECT * FROM transactions WHERE block_id = ANY($1);`, pq.Array(blocksId))
 	if err != nil {
 		return nil, err
@@ -116,7 +115,7 @@ func (repo *QueryRepository) GetTransactionsByBatchBlocksId(blocksId []uint64) (
 	return fetchTxs(rows)
 }
 
-func (repo *QueryRepository) GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event,error) {
+func (repo *QueryRepository) GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event, error) {
 	rows, err := repo.db.Query(`SELECT * FROM events WHERE tx_hash = ANY($1);`, pq.Array(txsHash))
 	if err != nil {
 		return nil, err
