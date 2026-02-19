@@ -89,24 +89,13 @@ func (service *QueryService) GetBlocksByRangeId(from, to uint64, tx bool) ([]dom
 		return nil, err
 	}
 
+	blockIDs := aggregateBlocksId(blocksData)	
+	mTxs, err := service.GetTransactionsByBatchBlocksId(blockIDs, tx)
+	if err != nil {
+		return nil, err
+	}
+
 	var blocks = make([]domain.BlockTxs, len(blocksData))
-
-	blocksId := aggregateBlocksId(blocksData)
-	
-	var txs []domain.Transaction
-	if (tx) {
-		txs, err = service.repo.GetTransactionsByBatchBlocksId(blocksId)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	mTxs := make(map[uint64][]domain.Transaction, len(blocksData))
-	for _, tx := range txs {
-		id := tx.BlockId
-		mTxs[id] = append(mTxs[id], tx)
-	}
-
 	for i, blockData := range blocksData {
 		id := blockData.Id
 		blocks[i] = domain.BlockTxs{
@@ -114,7 +103,28 @@ func (service *QueryService) GetBlocksByRangeId(from, to uint64, tx bool) ([]dom
 			Txs: mTxs[id],
 		}
 	}
+
 	return blocks, nil
+}
+
+func (service *QueryService) GetTransactionsByBatchBlocksId(blockIDs []uint64, tx bool) (map[uint64][]domain.Transaction,error) {
+	var txs []domain.Transaction
+	var err error
+
+	if (tx) {
+		txs, err = service.repo.GetTransactionsByBatchBlocksId(blockIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	mTxs := make(map[uint64][]domain.Transaction, len(blockIDs))
+	for _, tx := range txs {
+		id := tx.BlockId
+		mTxs[id] = append(mTxs[id], tx)
+	}
+
+	return mTxs, nil
 }
 
 func (service *QueryService) GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs,error) {
@@ -132,23 +142,14 @@ func (service *QueryService) GetBlocksByRangeTime(from, to uint64, tx bool) ([]d
 	if err != nil {
 		return nil, err
 	}
+	
+	blockIDs := aggregateBlocksId(blocksData)	
+	mTxs, err := service.GetTransactionsByBatchBlocksId(blockIDs, tx)
+	if err != nil {
+		return nil, err
+	}
 
 	var blocks = make([]domain.BlockTxs, len(blocksData))
-	blocksId := aggregateBlocksId(blocksData)
-	var txs []domain.Transaction
-	if (tx) {
-		txs, err = service.repo.GetTransactionsByBatchBlocksId(blocksId)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	mTxs := make(map[uint64][]domain.Transaction, len(blocksData))
-	for _, tx := range txs {
-		id := tx.BlockId
-		mTxs[id] = append(mTxs[id], tx)
-	}
-
 	for i, blockData := range blocksData {
 		id := blockData.Id
 		blocks[i] = domain.BlockTxs{
@@ -209,6 +210,24 @@ func (service *QueryService) GetEventByTxHashLogIndex(hash string, logIndex int)
 		return nil, err
 	}
 	return event, nil
+}
+
+func (service *QueryService) GetEventsByBatchTxsHash(txsHash []string) (map[string][]domain.Event,error) {
+	var events []domain.Event
+	var err error
+
+	events, err = service.repo.GetEventsByBatchTxsHash(txsHash)
+	if err != nil {
+		return nil, err
+	}
+
+	mEvents := make(map[string][]domain.Event, len(txsHash))
+	for _, event := range events {
+		hash := event.TxHash
+		mEvents[hash] = append(mEvents[hash], event)
+	}
+
+	return mEvents, nil
 }
 
 func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction,error) {

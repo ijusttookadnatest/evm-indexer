@@ -12,6 +12,16 @@ import (
 	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph/dto"
 )
 
+// Transactions is the resolver for the transactions field.
+func (r *blockResolver) Transactions(ctx context.Context, obj *dto.Block) ([]*dto.Transaction, error) {
+	return GetTransaction(ctx, obj.ID)
+}
+
+// Events is the resolver for the events field.
+func (r *transactionResolver) Events(ctx context.Context, obj *dto.Transaction) ([]*dto.Event, error) {
+	return GetEvent(ctx, obj.Hash)
+}
+
 // Blocks is the resolver for the blocks field.
 func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]*dto.Block, error) {
 	hasId := filter.ID != nil
@@ -47,7 +57,7 @@ func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]
 func (r *queryResolver) Transactions(ctx context.Context, filter *dto.TransactionFilter) ([]*dto.Transaction, error) {
 	txFilter := domain.TransactionFilter{
 		From: filter.From,
-		To: filter.To,
+		To:   filter.To,
 	}
 
 	txs, err := r.service.GetTransactionByFilter(txFilter)
@@ -70,7 +80,7 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 	}
 	eventFilter := domain.EventFilter{
 		Emitter: filter.Emitter,
-		Topics: topics,
+		Topics:  topics,
 	}
 
 	events, err := r.service.GetEventByFilter(eventFilter)
@@ -85,7 +95,16 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 	return dtoEvents, nil
 }
 
+
+// Block returns BlockResolver implementation.
+func (r *Resolver) Block() BlockResolver { return &blockResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Transaction returns TransactionResolver implementation.
+func (r *Resolver) Transaction() TransactionResolver { return &transactionResolver{r} }
+
+type blockResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type transactionResolver struct{ *Resolver }

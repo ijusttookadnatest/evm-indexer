@@ -49,3 +49,16 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
+  
+  Block:
+    fields:
+      transactions:
+        resolver: true
+  
+  Transaction:
+    fields:
+      events:
+        resolver: true
+            
+
+    

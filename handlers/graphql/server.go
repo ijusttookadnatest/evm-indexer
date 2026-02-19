@@ -1,11 +1,11 @@
-package main
+package graphql
 
 import (
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph"
 	"log"
 	"net/http"
-	"os"
-
+	
+	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph"
+	"github/ijusttookadnatest/indexer-evm/core/ports"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -16,8 +16,7 @@ import (
 
 const defaultPort = "8080"
 
-func main() {
-	port := os.Getenv("PORT")
+func Server(port string, service ports.QueryService, playgroundEnabled bool) {
 	if port == "" {
 		port = defaultPort
 	}
@@ -35,8 +34,10 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	if playgroundEnabled {
+		http.Handle("/graphql", playground.Handler("GraphQL playground", "/query"))
+	}
+	http.Handle("/graphql",  graph.Middleware(service, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

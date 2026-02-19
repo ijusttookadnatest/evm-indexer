@@ -39,7 +39,9 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Block() BlockResolver
 	Query() QueryResolver
+	Transaction() TransactionResolver
 }
 
 type DirectiveRoot struct {
@@ -79,10 +81,16 @@ type ComplexityRoot struct {
 	}
 }
 
+type BlockResolver interface {
+	Transactions(ctx context.Context, obj *dto.Block) ([]*dto.Transaction, error)
+}
 type QueryResolver interface {
 	Blocks(ctx context.Context, filter *dto.BlockFilter) ([]*dto.Block, error)
 	Transactions(ctx context.Context, filter *dto.TransactionFilter) ([]*dto.Transaction, error)
 	Events(ctx context.Context, filter *dto.EventFilter) ([]*dto.Event, error)
+}
+type TransactionResolver interface {
+	Events(ctx context.Context, obj *dto.Transaction) ([]*dto.Event, error)
 }
 
 type executableSchema struct {
@@ -661,7 +669,7 @@ func (ec *executionContext) _Block_transactions(ctx context.Context, field graph
 		field,
 		ec.fieldContext_Block_transactions,
 		func(ctx context.Context) (any, error) {
-			return obj.Transactions, nil
+			return ec.resolvers.Block().Transactions(ctx, obj)
 		},
 		nil,
 		ec.marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionᚄ,
@@ -674,8 +682,8 @@ func (ec *executionContext) fieldContext_Block_transactions(_ context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "Block",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "hash":
@@ -1205,7 +1213,7 @@ func (ec *executionContext) _Transaction_events(ctx context.Context, field graph
 		field,
 		ec.fieldContext_Transaction_events,
 		func(ctx context.Context) (any, error) {
-			return obj.Events, nil
+			return ec.resolvers.Transaction().Events(ctx, obj)
 		},
 		nil,
 		ec.marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventᚄ,
@@ -1218,8 +1226,8 @@ func (ec *executionContext) fieldContext_Transaction_events(_ context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "Transaction",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "logIndex":
@@ -2814,43 +2822,74 @@ func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, ob
 		case "id":
 			out.Values[i] = ec._Block_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "hash":
 			out.Values[i] = ec._Block_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "parentHash":
 			out.Values[i] = ec._Block_parentHash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "gasLimit":
 			out.Values[i] = ec._Block_gasLimit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "gasUsed":
 			out.Values[i] = ec._Block_gasUsed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "miner":
 			out.Values[i] = ec._Block_miner(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "timestamp":
 			out.Values[i] = ec._Block_timestamp(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "transactions":
-			out.Values[i] = ec._Block_transactions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Block_transactions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3055,25 +3094,56 @@ func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionS
 		case "hash":
 			out.Values[i] = ec._Transaction_hash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "from":
 			out.Values[i] = ec._Transaction_from(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "to":
 			out.Values[i] = ec._Transaction_to(ctx, field, obj)
 		case "gasUsed":
 			out.Values[i] = ec._Transaction_gasUsed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "events":
-			out.Values[i] = ec._Transaction_events(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Transaction_events(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
