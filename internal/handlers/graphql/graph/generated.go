@@ -377,7 +377,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_blocks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOBlockFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlockFilter)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOBlockFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlockFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +388,7 @@ func (ec *executionContext) field_Query_blocks_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_events_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOEventFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventFilter)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOEventFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (ec *executionContext) field_Query_events_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_transactions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOTransactionFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionFilter)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOTransactionFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -672,7 +672,7 @@ func (ec *executionContext) _Block_transactions(ctx context.Context, field graph
 			return ec.resolvers.Block().Transactions(ctx, obj)
 		},
 		nil,
-		ec.marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionᚄ,
+		ec.marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionᚄ,
 		true,
 		true,
 	)
@@ -830,7 +830,7 @@ func (ec *executionContext) _Query_blocks(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Blocks(ctx, fc.Args["filter"].(*dto.BlockFilter))
 		},
 		nil,
-		ec.marshalNBlock2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock,
+		ec.marshalNBlock2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock,
 		true,
 		true,
 	)
@@ -889,7 +889,7 @@ func (ec *executionContext) _Query_transactions(ctx context.Context, field graph
 			return ec.resolvers.Query().Transactions(ctx, fc.Args["filter"].(*dto.TransactionFilter))
 		},
 		nil,
-		ec.marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction,
+		ec.marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction,
 		true,
 		true,
 	)
@@ -942,7 +942,7 @@ func (ec *executionContext) _Query_events(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Events(ctx, fc.Args["filter"].(*dto.EventFilter))
 		},
 		nil,
-		ec.marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent,
+		ec.marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent,
 		true,
 		true,
 	)
@@ -1216,7 +1216,7 @@ func (ec *executionContext) _Transaction_events(ctx context.Context, field graph
 			return ec.resolvers.Transaction().Events(ctx, obj)
 		},
 		nil,
-		ec.marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventᚄ,
+		ec.marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventᚄ,
 		true,
 		true,
 	)
@@ -2698,7 +2698,7 @@ func (ec *executionContext) unmarshalInputBlockFilter(ctx context.Context, obj a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "fromTime", "toTime"}
+	fieldsInOrder := [...]string{"id", "fromTime", "toTime", "fromId", "offset"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2726,6 +2726,20 @@ func (ec *executionContext) unmarshalInputBlockFilter(ctx context.Context, obj a
 				return it, err
 			}
 			it.ToTime = data
+		case "fromId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromId"))
+			data, err := ec.unmarshalOUint642ᚖuint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FromID = data
+		case "offset":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			data, err := ec.unmarshalOUint642ᚖuint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Offset = data
 		}
 	}
 
@@ -3502,7 +3516,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBlock2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx context.Context, sel ast.SelectionSet, v []*dto.Block) graphql.Marshaler {
+func (ec *executionContext) marshalNBlock2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx context.Context, sel ast.SelectionSet, v []*dto.Block) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3526,7 +3540,7 @@ func (ec *executionContext) marshalNBlock2ᚕᚖgithubᚋijusttookadnatestᚋind
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOBlock2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx, sel, v[i])
+			ret[i] = ec.marshalOBlock2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3556,7 +3570,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v []*dto.Event) graphql.Marshaler {
+func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v []*dto.Event) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3580,7 +3594,7 @@ func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋind
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalOEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3594,7 +3608,7 @@ func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋind
 	return ret
 }
 
-func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*dto.Event) graphql.Marshaler {
+func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*dto.Event) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3618,7 +3632,7 @@ func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋind
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalNEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3638,7 +3652,7 @@ func (ec *executionContext) marshalNEvent2ᚕᚖgithubᚋijusttookadnatestᚋind
 	return ret
 }
 
-func (ec *executionContext) marshalNEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v *dto.Event) graphql.Marshaler {
+func (ec *executionContext) marshalNEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v *dto.Event) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3718,7 +3732,7 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v []*dto.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v []*dto.Transaction) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3742,7 +3756,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatest
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx, sel, v[i])
+			ret[i] = ec.marshalOTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3756,7 +3770,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatest
 	return ret
 }
 
-func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionᚄ(ctx context.Context, sel ast.SelectionSet, v []*dto.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionᚄ(ctx context.Context, sel ast.SelectionSet, v []*dto.Transaction) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3780,7 +3794,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatest
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx, sel, v[i])
+			ret[i] = ec.marshalNTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3800,7 +3814,7 @@ func (ec *executionContext) marshalNTransaction2ᚕᚖgithubᚋijusttookadnatest
 	return ret
 }
 
-func (ec *executionContext) marshalNTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *dto.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalNTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *dto.Transaction) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4079,14 +4093,14 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBlock2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx context.Context, sel ast.SelectionSet, v *dto.Block) graphql.Marshaler {
+func (ec *executionContext) marshalOBlock2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlock(ctx context.Context, sel ast.SelectionSet, v *dto.Block) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Block(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOBlockFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlockFilter(ctx context.Context, v any) (*dto.BlockFilter, error) {
+func (ec *executionContext) unmarshalOBlockFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐBlockFilter(ctx context.Context, v any) (*dto.BlockFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4124,14 +4138,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v *dto.Event) graphql.Marshaler {
+func (ec *executionContext) marshalOEvent2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEvent(ctx context.Context, sel ast.SelectionSet, v *dto.Event) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Event(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOEventFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventFilter(ctx context.Context, v any) (*dto.EventFilter, error) {
+func (ec *executionContext) unmarshalOEventFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐEventFilter(ctx context.Context, v any) (*dto.EventFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -4157,14 +4171,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *dto.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalOTransaction2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *dto.Transaction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Transaction(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOTransactionFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionFilter(ctx context.Context, v any) (*dto.TransactionFilter, error) {
+func (ec *executionContext) unmarshalOTransactionFilter2ᚖgithubᚋijusttookadnatestᚋindexerᚑevmᚋinternalᚋhandlersᚋgraphqlᚋgraphᚋdtoᚐTransactionFilter(ctx context.Context, v any) (*dto.TransactionFilter, error) {
 	if v == nil {
 		return nil, nil
 	}

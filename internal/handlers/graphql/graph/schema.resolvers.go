@@ -17,16 +17,15 @@ func (r *blockResolver) Transactions(ctx context.Context, obj *dto.Block) ([]*dt
 	return GetTransaction(ctx, obj.ID)
 }
 
-// Events is the resolver for the events field.
-func (r *transactionResolver) Events(ctx context.Context, obj *dto.Transaction) ([]*dto.Event, error) {
-	return GetEvent(ctx, obj.Hash)
-}
-
 // Blocks is the resolver for the blocks field.
 func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]*dto.Block, error) {
 	hasId := filter.ID != nil
 	hasRangeTime := filter.FromTime != nil && filter.ToTime != nil
-	if hasId && hasRangeTime {
+	hasRangeId := filter.FromID != nil && filter.Offset != nil
+	if hasId && hasRangeTime || hasId && hasRangeId || hasRangeId && hasRangeTime {
+		return nil, fmt.Errorf("invalid params")
+	}
+	if !hasId && !hasRangeId && !hasRangeTime {
 		return nil, fmt.Errorf("invalid params")
 	}
 
@@ -38,6 +37,8 @@ func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]
 		block, err = r.Service.GetBlockById(*filter.ID, false)
 	} else if hasRangeTime {
 		blocks, err = r.Service.GetBlocksByRangeTime(*filter.FromTime, *filter.ToTime, false)
+	} else {
+		blocks, err = r.Service.GetBlocksByRangeId(*filter.FromID, *filter.FromID+*filter.Offset, false)
 	}
 	if err != nil {
 		return nil, err
@@ -93,6 +94,11 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 		dtoEvents[i] = toEventDTO(event)
 	}
 	return dtoEvents, nil
+}
+
+// Events is the resolver for the events field.
+func (r *transactionResolver) Events(ctx context.Context, obj *dto.Transaction) ([]*dto.Event, error) {
+	return GetEvent(ctx, obj.Hash)
 }
 
 // Block returns BlockResolver implementation.

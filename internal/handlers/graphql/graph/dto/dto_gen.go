@@ -17,6 +17,8 @@ type BlockFilter struct {
 	ID       *uint64 `json:"id,omitempty"`
 	FromTime *uint64 `json:"fromTime,omitempty"`
 	ToTime   *uint64 `json:"toTime,omitempty"`
+	FromID   *uint64 `json:"fromId,omitempty"`
+	Offset   *uint64 `json:"offset,omitempty"`
 }
 
 type Event struct {

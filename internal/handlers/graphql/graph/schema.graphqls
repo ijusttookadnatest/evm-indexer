@@ -34,6 +34,8 @@ input BlockFilter {
   id: Uint64
   fromTime: Uint64
   toTime: Uint64
+  fromId: Uint64
+  offset: Uint64
 }
 
 input TransactionFilter {

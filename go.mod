@@ -4,6 +4,7 @@ go 1.25.3
 
 require (
 	github.com/99designs/gqlgen v0.17.86
+	github.com/graph-gophers/dataloader/v7 v7.1.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.26.0
@@ -17,7 +18,6 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/graph-gophers/dataloader/v7 v7.1.3 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
