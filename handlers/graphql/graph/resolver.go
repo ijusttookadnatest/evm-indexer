@@ -8,5 +8,5 @@ import "github/ijusttookadnatest/indexer-evm/core/ports"
 // here.
 
 type Resolver struct{
-	service ports.QueryService
+	Service ports.QueryService
 }

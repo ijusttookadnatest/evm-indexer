@@ -1,11 +1,11 @@
 package graphql
 
 import (
-	"log"
 	"net/http"
-	
-	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph"
+
 	"github/ijusttookadnatest/indexer-evm/core/ports"
+	"github/ijusttookadnatest/indexer-evm/handlers/graphql/graph"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -14,31 +14,30 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const defaultPort = "8080"
-
-func Server(port string, service ports.QueryService, playgroundEnabled bool) {
-	if port == "" {
-		port = defaultPort
-	}
-
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
-
+func NewHandler(service ports.QueryService) *handler.Server {
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service:service}}))
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
-
+	
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
-
+	
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
 
-	if playgroundEnabled {
-		http.Handle("/graphql", playground.Handler("GraphQL playground", "/query"))
-	}
-	http.Handle("/graphql",  graph.Middleware(service, srv))
+	return srv
+}
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+func NewRouter(service ports.QueryService, playgroundEnabled bool) http.Handler {
+	mux := http.NewServeMux()
+	srv := NewHandler(service)
+
+	if playgroundEnabled {
+		mux.Handle("/graphql/playground", playground.Handler("GraphQL playground", "/graphql/playground"))
+	}
+	mux.Handle("/graphql",  graph.Middleware(service, srv))
+
+	return mux
 }

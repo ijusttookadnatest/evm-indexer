@@ -1,16 +1,10 @@
 package config
 
-package config
-
 import (
 	"fmt"
-	"log"
 	"os"
-	"strconv"
 
-	"github.com/knadh/koanf/parsers/dotenv"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/v2"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -35,7 +29,7 @@ func loadEnv(path string) (map[string]string, error) {
 }
 
 func Load(path string) (*Config,error) {
-	env, err := loadEnv()
+	env, err := loadEnv(path)
 	if err != nil {
 		return nil, err
 	}
@@ -43,5 +37,5 @@ func Load(path string) (*Config,error) {
 		PostgresDSN: fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=disable", env["POSTGRES_USER"], env["POSTGRES_PASSWORD"], env["POSTGRES_HOST"], env["POSTGRES_PORT"], env["POSTGRES_DB"]),
 		RedisDSN:    fmt.Sprintf("redis://:%v@%v:%v/%v", env["REDIS_PASSWORD"], env["REDIS_HOST"], env["REDIS_PORT"], env["REDIS_DB"]),
 		Rpc: env["RPC_URL"],
-	}
+	}, nil
 }
