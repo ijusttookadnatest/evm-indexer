@@ -5,10 +5,13 @@ import (
 	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 )
 
+var defaultLimit = 100
+
 type QueryService struct {
 	repo         ports.QueryRepository
 	rangeMaxId   uint64
 	rangeMaxTime uint64
+	limitMax     int
 }
 
 func NewQueryService(repo ports.QueryRepository, rangeMaxId uint64, rangeMaxTime uint64) *QueryService {
@@ -172,7 +175,7 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 			return nil, err
 		}
 	}
-	if filter.Limit != nil && *filter.Limit <= 0 {
+	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > int(service.limitMax)) {
 		return nil, domain.ErrInvalidLimit
 	}
 	if filter.TxHash != nil {
@@ -189,6 +192,10 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 		if err := domain.ParseTopics(filter.Topics); err != nil {
 			return nil, err
 		}
+	}
+
+	if filter.Limit == nil {
+		*filter.Limit = defaultLimit
 	}
 	events, err := service.repo.GetEventByFilter(filter)
 	if err != nil {
@@ -245,7 +252,7 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 			return nil, err
 		}
 	}
-	if filter.Limit != nil && *filter.Limit <= 0 {
+	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > service.limitMax) {
 		return nil, domain.ErrInvalidLimit
 	}
 	if filter.Hash != nil {
@@ -263,6 +270,11 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 			return nil, err
 		}
 	}
+
+	if filter.Limit == nil {
+		*filter.Limit = defaultLimit
+	}
+
 	tsx, err := service.repo.GetTransactionByFilter(filter)
 	if err != nil {
 		return nil, err

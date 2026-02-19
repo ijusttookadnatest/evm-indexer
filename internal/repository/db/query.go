@@ -68,8 +68,9 @@ func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]dom
 			AND ($2::TEXT IS NULL OR emitter = $2)
 			AND ($3::TEXT[] IS NULL OR topics @> $3)
 			AND ($4::BIGINT IS NULL OR block_id > $4)
-			AND ($5::BIGINT IS NULL OR block_id < $5);
-		`, filter.TxHash, filter.Emitter, pq.Array(filter.Topics), filter.FromBlock, filter.Limit)
+			AND ($5::BIGINT IS NULL OR block_id < $5)
+		LIMIT $6;
+		`, filter.TxHash, filter.Emitter, pq.Array(filter.Topics), filter.FromBlock, filter.ToBlock, filter.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFi
 			AND ($4::TEXT IS NULL OR to_addr = $4)
 			AND ($5::BIGINT IS NULL OR block_id > $5)
 			AND ($6::BIGINT IS NULL OR block_id < $6)
-			AND ($7::INT IS NULL OR block_id > $7);
+		LIMIT $7;
 		`, filter.BlockId, filter.Hash, filter.From, filter.To, filter.FromBlock, filter.ToBlock, filter.Limit)
 	if err != nil {
 		return nil, err
