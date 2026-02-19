@@ -1,29 +1,41 @@
 package server
 
+import (
+	"fmt"
+	"net/http"
+	"time"
+)
+
 
 type Server struct {
-	server       *http.Server
+	Server *http.Server
 }
 
-func NewServer(port int, service ports.QueryService) *Server {
+func NewHTTPServer(routers []http.Handler, port string) *Server {
+	mux := http.NewServeMux()
+	
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "ok")
+	})
+
+	for i := range routers {
+		mux.Handle("/", routers[i])
+	}
+
 	return &Server{
-		server: &http.Server{
+		Server: &http.Server{
 			ReadTimeout: 10 * time.Second,
 			WriteTimeout: 10 * time.Second,
-			Addr:fmt.Sprintf(":%v", port),
-			Handler: newRouter(service),
+			Addr: ":" + port,
+			Handler: mux,
 		},
 	}
 }
 
-func (server *Server) Run() error {
-	if err := server.server.ListenAndServe(); err != nil {
+func (s *Server) Run() error {
+	if err := s.Server.ListenAndServe(); err != nil {
 		return err
 	}
 	return nil
 }
-
-// mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-// 	w.WriteHeader(http.StatusOK)
-// 	fmt.Fprintf(w, "ok")
-// })
