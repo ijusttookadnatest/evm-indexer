@@ -38,7 +38,7 @@ func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]
 	} else if hasRangeTime {
 		blocks, err = r.Service.GetBlocksByRangeTime(*filter.FromTime, *filter.ToTime, false)
 	} else {
-		blocks, err = r.Service.GetBlocksByRangeId(*filter.FromID, *filter.FromID+*filter.Offset, false)
+		blocks, err = r.Service.GetBlocksWithOffset(*filter.FromID, *filter.Offset, false)
 	}
 	if err != nil {
 		return nil, err

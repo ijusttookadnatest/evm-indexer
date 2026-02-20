@@ -5,7 +5,7 @@ import "github/ijusttookadnatest/indexer-evm/internal/core/domain"
 type QueryService interface {
 	GetBlockByHash(hash string, tx bool) (*domain.BlockTxs, error)
 	GetBlockById(id uint64, tx bool) (*domain.BlockTxs, error)
-	GetBlocksByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs, error)
+	GetBlocksWithOffset(fromId, offset uint64, tx bool) ([]domain.BlockTxs, error)
 	GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs, error)
 
 	GetTransactionByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error)

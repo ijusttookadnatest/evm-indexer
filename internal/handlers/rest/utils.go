@@ -10,7 +10,7 @@ import (
 var (
 	IdParam          = 1
 	HashParam        = 2
-	FromToBlockParam = 3
+	FromOffsetParam  = 3
 	FromToTimeParam  = 4
 )
 
@@ -19,8 +19,8 @@ type groupParam = int
 type blockDTO struct {
 	id         uint64
 	hash       string
-	fromBlock  uint64
-	toBlock    uint64
+	from       uint64
+	offset     uint64
 	fromTime   uint64
 	toTime     uint64
 	tx         bool
@@ -36,8 +36,8 @@ func extractBlockDTO(r *http.Request) (*blockDTO, error) {
 
 	id := query.Get("id")
 	hash := query.Get("hash")
-	fromBlock := query.Get("fromBlock")
-	toBlock := query.Get("toBlock")
+	from := query.Get("from")
+	offset := query.Get("offset")
 	fromTime := query.Get("fromTime")
 	toTime := query.Get("toTime")
 	tx := query.Get("tx")
@@ -50,9 +50,9 @@ func extractBlockDTO(r *http.Request) (*blockDTO, error) {
 		group++
 		block.groupParam = HashParam
 	}
-	if fromBlock != "" && toBlock != "" {
+	if from != "" {
 		group++
-		block.groupParam = FromToBlockParam
+		block.groupParam = FromOffsetParam
 	}
 	if fromTime != "" && toTime != "" {
 		group++
@@ -67,9 +67,13 @@ func extractBlockDTO(r *http.Request) (*blockDTO, error) {
 		block.hash = hash
 	} else if block.groupParam == IdParam {
 		block.id, err = strconv.ParseUint(id, 10, 64)
-	} else if block.groupParam == FromToBlockParam {
-		block.fromBlock, err = strconv.ParseUint(fromBlock, 10, 64)
-		block.toBlock, err = strconv.ParseUint(toBlock, 10, 64)
+	} else if block.groupParam == FromOffsetParam {
+		block.from, err = strconv.ParseUint(from, 10, 64)
+		if offset == "" {
+			block.offset = 0
+		} else {
+			block.offset, err = strconv.ParseUint(offset, 10, 64)
+		}
 	} else if block.groupParam == FromToTimeParam {
 		block.fromTime, err = strconv.ParseUint(fromTime, 10, 64)
 		block.toTime, err = strconv.ParseUint(toTime, 10, 64)

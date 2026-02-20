@@ -31,8 +31,8 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 		block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
 	case HashParam:
 		block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
-	case FromToBlockParam:
-		blocks, err = handler.service.GetBlocksByRangeId(blockDTO.fromBlock, blockDTO.toBlock, blockDTO.tx)
+	case FromOffsetParam: 
+		blocks, err = handler.service.GetBlocksWithOffset(blockDTO.from, blockDTO.offset, blockDTO.tx)
 	case FromToTimeParam:
 		blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
 	}

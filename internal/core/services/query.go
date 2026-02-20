@@ -5,20 +5,19 @@ import (
 	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 )
 
-var defaultLimit = 100
+var offsetDefault uint64 = 100
 
 type QueryService struct {
 	repo         ports.QueryRepository
-	rangeMaxId   uint64
 	rangeMaxTime uint64
-	limitMax     int
+	offsetMax    uint64
 }
 
-func NewQueryService(repo ports.QueryRepository, rangeMaxId uint64, rangeMaxTime uint64) *QueryService {
+func NewQueryService(repo ports.QueryRepository, offsetMax uint64, rangeMaxTime uint64) *QueryService {
 	return &QueryService{
 		repo:         repo,
-		rangeMaxId:   rangeMaxId,
 		rangeMaxTime: rangeMaxTime,
+		offsetMax:    offsetMax,
 	}
 }
 
@@ -76,18 +75,14 @@ func aggregateBlocksId(blocksData []domain.Block) []uint64 {
 	return blocksId
 }
 
-func (service *QueryService) GetBlocksByRangeId(from, to uint64, tx bool) ([]domain.BlockTxs, error) {
-	if to == 0 {
-		return nil, domain.ErrInvalidId
+func (service *QueryService) GetBlocksWithOffest(from, offset uint64, tx bool) ([]domain.BlockTxs, error) {
+	if offset > service.offsetMax {
+		return nil, domain.ErrInvalidOffset
 	}
-	if from >= to {
-		return nil, domain.ErrInvalidId
+	if offset == 0 {
+		offset = offsetDefault
 	}
-	if err := domain.ValidateBlockRange(from, to, service.rangeMaxId); err != nil {
-		return nil, domain.ErrInvalidId
-	}
-
-	blocksData, err := service.repo.GetBlocksByRangeId(from, to)
+	blocksData, err := service.repo.GetBlocksByRangeId(from, from + offset)
 	if err != nil {
 		return nil, err
 	}
@@ -171,11 +166,11 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 		if (filter.FromBlock != nil && filter.ToBlock == nil) || (filter.ToBlock != nil && filter.FromBlock == nil) {
 			return nil, domain.ErrInvalidBlockRange
 		}
-		if err := domain.ValidateBlockRange(*filter.FromBlock, *filter.ToBlock, service.rangeMaxId); err != nil {
+		if err := domain.ValidateBlockRange(*filter.FromBlock, *filter.ToBlock, service.offsetMax); err != nil {
 			return nil, err
 		}
 	}
-	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > int(service.limitMax)) {
+	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > int(service.offsetMax)) {
 		return nil, domain.ErrInvalidLimit
 	}
 	if filter.TxHash != nil {
@@ -195,7 +190,7 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 	}
 
 	if filter.Limit == nil {
-		*filter.Limit = defaultLimit
+		*filter.Limit = int(offsetDefault)
 	}
 	events, err := service.repo.GetEventByFilter(filter)
 	if err != nil {
@@ -248,11 +243,11 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 		if (filter.FromBlock != nil && filter.ToBlock == nil) || (filter.ToBlock != nil && filter.FromBlock == nil) {
 			return nil, domain.ErrInvalidBlockRange
 		}
-		if err := domain.ValidateBlockRange(*filter.FromBlock, *filter.ToBlock, service.rangeMaxId); err != nil {
+		if err := domain.ValidateBlockRange(*filter.FromBlock, *filter.ToBlock, service.offsetMax); err != nil {
 			return nil, err
 		}
 	}
-	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > service.limitMax) {
+	if filter.Limit != nil && (*filter.Limit <= 0 || *filter.Limit > int(service.offsetMax)) {
 		return nil, domain.ErrInvalidLimit
 	}
 	if filter.Hash != nil {
@@ -272,7 +267,7 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 	}
 
 	if filter.Limit == nil {
-		*filter.Limit = defaultLimit
+		*filter.Limit = int(offsetDefault)
 	}
 
 	tsx, err := service.repo.GetTransactionByFilter(filter)
