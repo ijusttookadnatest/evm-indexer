@@ -190,7 +190,8 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 	}
 
 	if filter.Limit == nil {
-		*filter.Limit = int(offsetDefault)
+		defaultLimit := int(offsetDefault)
+		filter.Limit = &defaultLimit
 	}
 	events, err := service.repo.GetEventByFilter(filter)
 	if err != nil {
@@ -267,7 +268,8 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 	}
 
 	if filter.Limit == nil {
-		*filter.Limit = int(offsetDefault)
+		defaultLimit := int(offsetDefault)
+		filter.Limit = &defaultLimit
 	}
 
 	tsx, err := service.repo.GetTransactionByFilter(filter)

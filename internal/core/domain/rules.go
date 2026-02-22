@@ -11,7 +11,7 @@ func ParseHash(hash string) error {
 	if  len(hash) != hashLen {
 		return ErrInvalidHash
 	}
-	if hash[0] != '0' && hash[1] != 'x' {
+	if hash[0] != '0' || hash[1] != 'x' {
 		return ErrInvalidHash
 	}
 	return nil
@@ -21,7 +21,7 @@ func ParseAddress(addr string) error {
 	if  len(addr) != addressLen {
 		return ErrInvalidAddress
 	}
-	if addr[0] != '0' && addr[1] != 'x' {
+	if addr[0] != '0' || addr[1] != 'x' {
 		return ErrInvalidAddress
 	}
 	return nil
