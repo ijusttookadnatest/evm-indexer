@@ -33,7 +33,7 @@ func TestCreate_Integration(t *testing.T) {
 		}
 
 		// Verify block was persisted
-		got, err := queryRepo.GetById(200)
+		got, err := queryRepo.GetBlockById(200)
 		if err != nil {
 			t.Fatalf("block should exist: %v", err)
 		}
@@ -71,7 +71,7 @@ func TestDelete_Integration(t *testing.T) {
 		}
 
 		// Verify block is gone
-		_, err = queryRepo.GetById(100)
+		_, err = queryRepo.GetBlockById(100)
 		if err == nil {
 			t.Fatal("block should be deleted")
 		}

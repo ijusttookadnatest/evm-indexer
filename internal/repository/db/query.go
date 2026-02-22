@@ -16,7 +16,7 @@ func NewQueryRepository(db *sql.DB) *QueryRepository {
 }
 
 func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_id = $1;`, id)
+	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id = $1;`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block, error) {
 }
 
 func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_hash = $1;`, hash)
+	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_hash = $1;`, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block, error) 
 }
 
 func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT * FROM blocks  WHERE block_id > $1 AND block_id < $2;`, from, to)
+	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id > $1 AND block_id < $2;`, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block
 }
 
 func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT * FROM blocks WHERE block_timestamp > $1 AND block_timestamp < $2;`, from, to)
+	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_timestamp > $1 AND block_timestamp < $2;`, from, to)
 	if err != nil {
 		return nil, err
 	}

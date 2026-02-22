@@ -7,8 +7,6 @@ import (
 	"log"
 	"os"
 	"testing"
-
-	"github.com/pressly/goose/v3"
 )
 
 var testDB *sql.DB
@@ -28,14 +26,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to ping DB: %v", err)
 	}
 
-	goose.SetDialect("postgres")
-	if err = goose.Up(testDB, "../db/migrations"); err != nil {
+	if err = RunUpMigrations(testDB) ; err != nil {
 		log.Fatalf("Failed to run up migrations: %v", err)
 	}
 
 	code := m.Run()
 
-	if err = goose.Down(testDB, "../db/migrations"); err != nil {
+	if err = RunDownMigrations(testDB) ; err != nil {
 		log.Fatalf("Failed to run down migrations: %v", err)
 	}
 	testDB.Close()
