@@ -2,14 +2,7 @@ package ws
 
 import "fmt"
 
-type subscribeMessage struct {
-	Type string `json:"type"`
-	Topic string `json:"topic"`
-	Address string `json:"address"`
-	Topic0 string `json:"topics0"`
-}
-
-func validateSubscription(sub subscribeMessage) error {
+func validateSubscription(sub SubscribeMessage) error {
 	if sub.Type != "subscribe" {
 		return fmt.Errorf("invalid subscription")
 	}
@@ -19,7 +12,7 @@ func validateSubscription(sub subscribeMessage) error {
 	return nil
 }
 
-func extractFilter(sub subscribeMessage) SubscriptionFilter {
+func extractFilter(sub SubscribeMessage) SubscriptionFilter {
 	var address, topic0 string
 	if sub.Address != "" {
 		address = sub.Address

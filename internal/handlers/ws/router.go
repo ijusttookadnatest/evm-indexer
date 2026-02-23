@@ -45,18 +45,18 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 
 func newRouter() http.Handler {
    entities := map[string]*Entity{
-       "block":       newEntity(),
-       "transaction": newEntity(),
-       "event":       newEntity(),
+       "blocks":       newEntity(),
+       "transactions": newEntity(),
+       "events":       newEntity(),
    }
    handler := NewHandler(entities)
 
    mux := http.NewServeMux()
    mux.HandleFunc("/ws", handler.entitySubscription)
 
-   go entities["block"].broadcast()
-   go entities["transaction"].broadcast()
-   go entities["event"].broadcast()
+   go entities["blocks"].broadcast()
+   go entities["transactions"].broadcast()
+   go entities["events"].broadcast()
 
    return mux
 }

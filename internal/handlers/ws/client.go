@@ -6,6 +6,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type SubscribeMessage struct {
+	Type 	string `json:"type"`
+	Topic 	string `json:"topic"`
+	Address string `json:"address"`
+	Topic0 	string `json:"topics0"`
+}
+
 type Position struct {
 	topic 	string
 	filter 	SubscriptionFilter
@@ -32,7 +39,7 @@ func newClient(conn *websocket.Conn, entities map[string]*Entity) *Client {
 }
 
 func (client *Client) subscribe(message []byte) error {
-  	subscription := new(subscribeMessage)
+  	subscription := new(SubscribeMessage)
 	if err := json.Unmarshal(message, subscription) ; err != nil {
 		return err
 	}
