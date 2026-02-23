@@ -224,3 +224,4 @@ func extractTxFilter(r *http.Request) (domain.TransactionFilter, error) {
 
 	return filter, nil
 }
+
