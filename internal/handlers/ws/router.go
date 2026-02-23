@@ -7,11 +7,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var entities = map[string]*Entity{
-    "block":       newEntity(),
-    "transaction": newEntity(),
-    "event":       newEntity(),
+type Handler struct {
+	entities map[string]*Entity
 }
+
+func NewHandler(entities map[string]*Entity) *Handler {
+	return &Handler{entities: entities}
+}
+
 
 var upgrader = websocket.Upgrader{
     CheckOrigin: func(r *http.Request) bool {
@@ -19,7 +22,7 @@ var upgrader = websocket.Upgrader{
     },
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Request) {
    conn, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
       fmt.Println("Error upgrading:", err)
@@ -27,7 +30,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
    }
    defer conn.Close()
 
-   client := newClient(conn)
+   client := newClient(conn, handler.entities)
    go client.messageWriter()
 
 	for {
@@ -41,12 +44,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func newRouter() http.Handler {
-   mux := http.NewServeMux()
-   mux.HandleFunc("/ws", handler)
+   entities := map[string]*Entity{
+       "block":       newEntity(),
+       "transaction": newEntity(),
+       "event":       newEntity(),
+   }
+   handler := NewHandler(entities)
 
-   go entities["block"].broadcaster()
-   go entities["transaction"].broadcaster()
-   go entities["event"].broadcaster()
+   mux := http.NewServeMux()
+   mux.HandleFunc("/ws", handler.entitySubscription)
+
+   go entities["block"].broadcast()
+   go entities["transaction"].broadcast()
+   go entities["event"].broadcast()
 
    return mux
 }

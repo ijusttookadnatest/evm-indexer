@@ -6,22 +6,32 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Client struct {
-   conn  *websocket.Conn
-   outgoing     chan []byte
+type Position struct {
+	topic 	string
+	filter 	SubscriptionFilter
+	index 	int
 }
 
-func newClient(conn *websocket.Conn) *Client {
+type Client struct {
+   conn  		*websocket.Conn
+   outgoing     chan []byte
+   entities 	map[string]*Entity
+   pos	    	[]Position
+}
+
+func newClient(conn *websocket.Conn, entities map[string]*Entity) *Client {
    c := make(chan []byte)
+   var pos []Position
 
    return &Client{
       conn: conn,
       outgoing: c,
+	  entities: entities,
+	  pos: pos,
    }
 }
 
-
-func (client Client) subscribe(message []byte) error {
+func (client *Client) subscribe(message []byte) error {
   	subscription := new(subscribeMessage)
 	if err := json.Unmarshal(message, subscription) ; err != nil {
 		return err
@@ -30,29 +40,32 @@ func (client Client) subscribe(message []byte) error {
 		return err
 	}
 	
-	entity := entities[subscription.Topic]
+	entity := client.entities[subscription.Topic]
 	filter := extractFilter(*subscription)
-
+	
 	entity.mu.Lock()
-	entity.clients[filter] = append(entity.clients[filter], client)
+	index := len(entity.clientsChan[filter])
+	entity.clientsChan[filter] = append(entity.clientsChan[filter], client.outgoing)
 	entity.mu.Unlock()
+
+	client.pos = append(client.pos, Position{
+		topic: subscription.Topic,
+		filter: filter,
+		index:index,
+	})
 
 	return nil
 }
 
-func (client Client) delete() {
+func (client *Client) delete() {
    client.conn.Close()
-   for _, entity := range entities {
-      entity.mu.Lock()
-      for i := range entity.clients {
-         for j := range entity.clients[i] {
-            if entity.clients[i][j] == client {
-               entity.clients[i] = append(entity.clients[i][:j], entity.clients[i][j+1:]...)
-               break
-            }
-         }
-      }
-      entity.mu.Unlock()
+   for _, pos := range client.pos {
+		entity := client.entities[pos.topic]
+
+		entity.mu.Lock()
+		c := entity.clientsChan[pos.filter]
+		entity.clientsChan[pos.filter] = append(c[:pos.index], c[pos.index+1:]...) 
+		entity.mu.Unlock()
    }
 }
 

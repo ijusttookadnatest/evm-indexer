@@ -18,33 +18,33 @@ type SubscriptionFilter struct {
 }
 
 type Entity struct {
-   clients map[SubscriptionFilter][]Client
+   clientsChan map[SubscriptionFilter][]chan[]byte
    mu *sync.RWMutex
    incoming chan []byte
 }
 
 func newEntity() *Entity {
-	clients := make(map[SubscriptionFilter][]Client)
+	clientsChan := make(map[SubscriptionFilter][]chan[]byte)
 	c := make(chan []byte)
 	return &Entity{
-		clients:clients,
+		clientsChan:clientsChan,
 		mu: &sync.RWMutex{},
 		incoming: c,
 	}
 }
 
-func (entity Entity) broadcaster() {
+func (entity Entity) broadcast() {
    for {
 		data := <- entity.incoming
 		var payload = new(PayloadFilter)
 		
 		json.Unmarshal(data, &payload)
 		entity.mu.RLock()
-		for filter, clients := range entity.clients {
+		for filter, clientsChan := range entity.clientsChan {
 			if matchesFilter(filter, *payload) {
-				for _, client := range clients {
+				for _, clientChan := range clientsChan {
 					select {
-					case client.outgoing <- data:
+					case clientChan <- data:
 					default:
 					}
 				}
