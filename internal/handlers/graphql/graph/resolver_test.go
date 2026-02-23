@@ -34,13 +34,13 @@ func (m serviceMock) GetBlocksWithOffset(_, _ uint64, _ bool) ([]domain.BlockTxs
 func (m serviceMock) GetBlocksByRangeTime(_, _ uint64, _ bool) ([]domain.BlockTxs, error) {
 	return m.blocks, m.err
 }
-func (m serviceMock) GetTransactionByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
+func (m serviceMock) GetTransactionsByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
 	return m.txs, m.err
 }
 func (m serviceMock) GetTransactionsByBatchBlocksId(_ []uint64, _ bool) (map[uint64][]domain.Transaction, error) {
 	return m.txsMap, m.err
 }
-func (m serviceMock) GetEventByFilter(_ domain.EventFilter) ([]domain.Event, error) {
+func (m serviceMock) GetEventsByFilter(_ domain.EventFilter) ([]domain.Event, error) {
 	return m.events, m.err
 }
 func (m serviceMock) GetEventByTxHashLogIndex(_ string, _ int) (*domain.Event, error) {

@@ -43,7 +43,7 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
    }
 }
 
-func newRouter() http.Handler {
+func NewRouter() http.Handler {
    entities := map[string]*Entity{
        "blocks":       newEntity(),
        "transactions": newEntity(),

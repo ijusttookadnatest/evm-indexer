@@ -33,7 +33,7 @@ func (service *QueryService) GetBlockByHash(hash string, tx bool) (*domain.Block
 	var txs []domain.Transaction
 	if tx {
 		filter := domain.TransactionFilter{BlockId: &blockData.Id}
-		txs, err = service.repo.GetTransactionByFilter(filter)
+		txs, err = service.repo.GetTransactionsByFilter(filter)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (service *QueryService) GetBlockById(id uint64, tx bool) (*domain.BlockTxs,
 	var txs []domain.Transaction
 	if tx {
 		filter := domain.TransactionFilter{BlockId: &blockData.Id}
-		txs, err = service.repo.GetTransactionByFilter(filter)
+		txs, err = service.repo.GetTransactionsByFilter(filter)
 		if err != nil {
 			return nil, err
 		}
@@ -75,14 +75,14 @@ func aggregateBlocksId(blocksData []domain.Block) []uint64 {
 	return blocksId
 }
 
-func (service *QueryService) GetBlocksWithOffest(from, offset uint64, tx bool) ([]domain.BlockTxs, error) {
+func (service *QueryService) GetBlocksWithOffset(from, offset uint64, tx bool) ([]domain.BlockTxs, error) {
 	if offset > service.offsetMax {
 		return nil, domain.ErrInvalidOffset
 	}
 	if offset == 0 {
 		offset = offsetDefault
 	}
-	blocksData, err := service.repo.GetBlocksByRangeId(from, from + offset)
+	blocksData, err := service.repo.GetBlocksByRangeId(from, from+offset)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (service *QueryService) GetEventsByFilter(filter domain.EventFilter) ([]dom
 		defaultLimit := int(offsetDefault)
 		filter.Limit = &defaultLimit
 	}
-	events, err := service.repo.GetEventByFilter(filter)
+	events, err := service.repo.GetEventsByFilter(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (service *QueryService) GetTransactionsByFilter(filter domain.TransactionFi
 		filter.Limit = &defaultLimit
 	}
 
-	tsx, err := service.repo.GetTransactionByFilter(filter)
+	tsx, err := service.repo.GetTransactionsByFilter(filter)
 	if err != nil {
 		return nil, err
 	}

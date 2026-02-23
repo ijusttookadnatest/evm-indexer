@@ -78,13 +78,17 @@ func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]dom
 	return fetchEvents(rows)
 }
 
-func (repo *QueryRepository) GetEventsByTxHashLogIndex(txHash string, logIndex int) ([]domain.Event, error) {
+func (repo *QueryRepository) GetEventByTxHashLogIndex(txHash string, logIndex int) (*domain.Event, error) {
 	rows, err := repo.db.Query(`SELECT * FROM events  WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	return fetchEvents(rows)
+	events, err := fetchEvents(rows)
+	if err != nil {
+		return nil, err
+	}
+	return &events[0], nil
 }
 
 func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {

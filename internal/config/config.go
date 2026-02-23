@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -11,6 +12,10 @@ type Config struct {
 	PostgresDSN string
 	RedisDSN    string
 	Rpc     	string
+	Port		string
+	PlaygroundEnabled bool
+	RangeMaxTime uint64
+	OffsetMax	uint64
 }
 
 
@@ -33,9 +38,24 @@ func Load(path string) (*Config,error) {
 	if err != nil {
 		return nil, err
 	}
+
+	pgEnabled := env["PLAYGROUND_ENABLED"] == "true"
+	rangeMaxTime, err := strconv.ParseUint(env["MAX_TIME"], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	offsetMax, err := strconv.ParseUint(env["MAX_OFFSET"], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		PostgresDSN: fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=disable", env["POSTGRES_USER"], env["POSTGRES_PASSWORD"], env["POSTGRES_HOST"], env["POSTGRES_PORT"], env["POSTGRES_DB"]),
 		RedisDSN:    fmt.Sprintf("redis://:%v@%v:%v/%v", env["REDIS_PASSWORD"], env["REDIS_HOST"], env["REDIS_PORT"], env["REDIS_DB"]),
 		Rpc: env["RPC_URL"],
+		Port: env["PORT"],
+		PlaygroundEnabled: pgEnabled,
+		RangeMaxTime: rangeMaxTime,
+		OffsetMax: offsetMax,
 	}, nil
 }

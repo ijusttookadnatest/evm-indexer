@@ -8,10 +8,10 @@ type QueryRepository interface {
 	GetBlocksByRangeId(from, to uint64) ([]domain.Block, error)
 	GetBlocksByRangeTime(from, to uint64) ([]domain.Block, error)
 
-	GetTransactionByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error)
+	GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error)
 	GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction, error)
 
-	GetEventByFilter(filter domain.EventFilter) ([]domain.Event, error)
+	GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error)
 	GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event, error)
 	GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event, error)
 }

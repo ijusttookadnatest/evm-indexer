@@ -10,50 +10,50 @@ import (
 )
 
 type serviceMock struct {
-	block *domain.BlockTxs
+	block     *domain.BlockTxs
 	blocksTxs []domain.BlockTxs
-	events []domain.Event
-	event *domain.Event
-	txs []domain.Transaction
+	events    []domain.Event
+	event     *domain.Event
+	txs       []domain.Transaction
 
 	err error
 }
 
 func newServiceMock(block *domain.BlockTxs, blocksTxs []domain.BlockTxs, events []domain.Event, txs []domain.Transaction, err error) *serviceMock {
 	return &serviceMock{
-		block: block,
+		block:     block,
 		blocksTxs: blocksTxs,
-		events: events,
-		txs: txs,
-		err: err,
+		events:    events,
+		txs:       txs,
+		err:       err,
 	}
 }
 
-func (service serviceMock)	GetBlockByHash(hash string, tx bool) (*domain.BlockTxs, error) {
+func (service serviceMock) GetBlockByHash(hash string, tx bool) (*domain.BlockTxs, error) {
 	return service.block, service.err
 }
 
-func (service serviceMock)	GetBlockById(id uint64, tx bool) (*domain.BlockTxs, error) {
+func (service serviceMock) GetBlockById(id uint64, tx bool) (*domain.BlockTxs, error) {
 	return service.block, service.err
 }
 
-func (service serviceMock)	GetBlocksWithOffset(fromId, offset uint64, tx bool) ([]domain.BlockTxs, error) {
+func (service serviceMock) GetBlocksWithOffset(fromId, offset uint64, tx bool) ([]domain.BlockTxs, error) {
 	return service.blocksTxs, service.err
 }
 
-func (service serviceMock)	GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs, error) {
+func (service serviceMock) GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs, error) {
 	return service.blocksTxs, service.err
 }
 
-func (service serviceMock)	GetTransactionByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {
+func (service serviceMock) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {
 	return service.txs, service.err
 }
 
-func (service serviceMock)	GetEventByFilter(filter domain.EventFilter) ([]domain.Event, error) {
+func (service serviceMock) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error) {
 	return service.events, service.err
 }
 
-func (service serviceMock)	GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event, error) {
+func (service serviceMock) GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event, error) {
 	return service.event, service.err
 }
 
@@ -86,27 +86,27 @@ func newHandler(service *serviceMock) *Handler {
 
 func TestGetBlock(t *testing.T) {
 	blockTxs := &domain.BlockTxs{
-		Block:domain.Block{Id: 42, Hash: validHash()},
-		Txs:[]domain.Transaction{
+		Block: domain.Block{Id: 42, Hash: validHash()},
+		Txs: []domain.Transaction{
 			{BlockId: 42, Hash: validHash(), From: "0x" + "abcdef1234567890abcdef1234567890abcdef12"},
 		},
 	}
 
-	tests := []struct{
-		name 		string
-		service 	serviceMock
-		args 		string
-		w 			*httptest.ResponseRecorder
-		wantStatus	int
-		wantEmpty	bool
+	tests := []struct {
+		name       string
+		service    serviceMock
+		args       string
+		w          *httptest.ResponseRecorder
+		wantStatus int
+		wantEmpty  bool
 	}{
 		{
-			name: "happy path",
-			service: serviceMock{block:blockTxs},
-			args: "id=42&tx=yes",
-			w: httptest.NewRecorder(),
+			name:       "happy path",
+			service:    serviceMock{block: blockTxs},
+			args:       "id=42&tx=yes",
+			w:          httptest.NewRecorder(),
 			wantStatus: http.StatusOK,
-			wantEmpty: false,
+			wantEmpty:  false,
 		},
 		{
 			name:       "invalid params — no query group",

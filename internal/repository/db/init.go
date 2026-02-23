@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"github/ijusttookadnatest/indexer-evm/internal/config"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -14,10 +13,10 @@ import (
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
-func New(cfg config.Config) (*sql.DB,error) {
+func New(dsn string) (*sql.DB,error) {
 	var err error
 
-	db, err := sql.Open("postgres", cfg.PostgresDSN)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}

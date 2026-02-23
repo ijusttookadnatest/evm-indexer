@@ -61,7 +61,7 @@ func (r *queryResolver) Transactions(ctx context.Context, filter *dto.Transactio
 		To:   filter.To,
 	}
 
-	txs, err := r.Service.GetTransactionByFilter(txFilter)
+	txs, err := r.Service.GetTransactionsByFilter(txFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 		Topics:  topics,
 	}
 
-	events, err := r.Service.GetEventByFilter(eventFilter)
+	events, err := r.Service.GetEventsByFilter(eventFilter)
 	if err != nil {
 		return nil, err
 	}

@@ -31,7 +31,7 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 		block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
 	case HashParam:
 		block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
-	case FromOffsetParam: 
+	case FromOffsetParam:
 		blocks, err = handler.service.GetBlocksWithOffset(blockDTO.from, blockDTO.offset, blockDTO.tx)
 	case FromToTimeParam:
 		blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
@@ -57,7 +57,7 @@ func (handler *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := handler.service.GetEventByFilter(filter)
+	events, err := handler.service.GetEventsByFilter(filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return
@@ -101,7 +101,7 @@ func (handler *Handler) GetTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	txs, err := handler.service.GetTransactionByFilter(filter)
+	txs, err := handler.service.GetTransactionsByFilter(filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return

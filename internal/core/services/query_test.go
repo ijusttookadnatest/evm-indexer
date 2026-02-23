@@ -35,7 +35,7 @@ func (m *mockRepo) GetBlocksByRangeTime(_, _ uint64) ([]domain.Block, error) {
 	return m.blocksResult, m.blockErr
 }
 
-func (m *mockRepo) GetTransactionByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
+func (m *mockRepo) GetTransactionsByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
 	return m.txsResult, m.txErr
 }
 
@@ -43,7 +43,7 @@ func (m *mockRepo) GetTransactionsByBatchBlocksId(_ []uint64) ([]domain.Transact
 	return m.txsResult, m.txErr
 }
 
-func (m *mockRepo) GetEventByFilter(_ domain.EventFilter) ([]domain.Event, error) {
+func (m *mockRepo) GetEventsByFilter(_ domain.EventFilter) ([]domain.Event, error) {
 	return m.eventsResult, m.eventErr
 }
 
@@ -260,7 +260,7 @@ func TestGetBlocksWithOffset(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetBlocksWithOffest(tc.from, tc.offset, tc.withTxs)
+			got, err := svc.GetBlocksWithOffset(tc.from, tc.offset, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -411,11 +411,11 @@ func TestGetBlockByHash(t *testing.T) {
 		wantTxLen int
 	}{
 		{
-			name: "invalid hash",
-			hash : "abcdef1234567890abcdef1234567890abcdef12",
-			withTxs: false,
-			repo: &mockRepo{},
-			wantErr: domain.ErrInvalidHash,
+			name:      "invalid hash",
+			hash:      "abcdef1234567890abcdef1234567890abcdef12",
+			withTxs:   false,
+			repo:      &mockRepo{},
+			wantErr:   domain.ErrInvalidHash,
 			wantBlock: nil,
 			wantTxLen: 0,
 		},
@@ -910,9 +910,9 @@ func TestGetEventsByBatchTxsHash(t *testing.T) {
 			wantErr: repoErr,
 		},
 		{
-			name:   "empty result",
-			hashes: []string{hash1},
-			repo:   &mockRepo{},
+			name:    "empty result",
+			hashes:  []string{hash1},
+			repo:    &mockRepo{},
 			wantMap: map[string]int{},
 		},
 		{

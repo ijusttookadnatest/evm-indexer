@@ -252,33 +252,27 @@ func TestGetEventsByTxHashLogIndex_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid event", func(t *testing.T) {
-		events, err := repo.GetEventsByTxHashLogIndex("0xtx2", 0)
+		event, err := repo.GetEventByTxHashLogIndex("0xtx2", 0)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
-		if len(events) != 1 {
-			t.Fatalf("should return 1 event, has %v", len(events))
-		}
-		if events[0].LogIndex != 0 || events[0].TxHash != "0xtx2" {
-			t.Errorf("invalid events data: %v", events)
+		if event.LogIndex != 0 || event.TxHash != "0xtx2" {
+			t.Errorf("invalid events data: %v", event)
 		}
 	})
 
 	t.Run("multiple events same tx", func(t *testing.T) {
-		events, err := repo.GetEventsByTxHashLogIndex("0xtx2", 1)
+		event, err := repo.GetEventByTxHashLogIndex("0xtx2", 1)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
-		if len(events) != 1 {
-			t.Fatalf("should return 1 event, has %v", len(events))
-		}
-		if events[0].Emitter != "0xContract" {
-			t.Errorf("invalid emitter: %v", events[0].Emitter)
+		if event.Emitter != "0xContract" {
+			t.Errorf("invalid emitter: %v", event.Emitter)
 		}
 	})
 
 	t.Run("no event", func(t *testing.T) {
-		_, err := repo.GetEventsByTxHashLogIndex("0xnonexistent", 0)
+		_, err := repo.GetEventByTxHashLogIndex("0xnonexistent", 0)
 		if err == nil {
 			t.Fatal("should return an error")
 		}

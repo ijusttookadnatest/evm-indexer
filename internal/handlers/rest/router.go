@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func newRouter(service ports.QueryService) http.Handler {
+func NewRouter(service ports.QueryService) http.Handler {
 	mux := http.NewServeMux()
 	handler := NewHandler(service)
 
