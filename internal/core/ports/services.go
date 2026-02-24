@@ -20,3 +20,9 @@ type IndexerService interface {
 	Create(block *domain.Block, txs []domain.Transaction, events []domain.Event) error
 	Delete(blockId int) error
 }
+
+type BackfillingService interface {
+	Run(from, to uint64) error
+}
+
+

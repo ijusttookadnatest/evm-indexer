@@ -9,6 +9,10 @@ type Event struct {
     Topics []string
 }
 
+type RawBlockData struct {}
+type RawEventData struct {}
+type RawTransactionData struct {}
+
 type Block struct {
 	Hash string
     Id uint64
@@ -30,6 +34,7 @@ type Transaction struct {
 	From string
 	To *string
 	GasUsed uint64
+    Status uint64
 }
 
 type TransactionFilter struct {
