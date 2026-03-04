@@ -33,7 +33,7 @@ type RPCTransaction struct {
 
 type RPCBlock struct {
 	Hash        common.Hash      `json:"hash"`
-	Number      hexutil.Uint64   `json:"number"`      // "0x1b4" → uint64
+	Number      hexutil.Uint64   `json:"number"`
 	ParentHash  common.Hash      `json:"parentHash"`
 	Timestamp   hexutil.Uint64   `json:"timestamp"`
 	GasLimit    hexutil.Uint64   `json:"gasLimit"`
@@ -72,6 +72,15 @@ func (b *Backfiller) FetchBlock(id uint64) (*domain.Block,[]domain.Transaction,[
 	}
 
 	return &block, txs, events, nil
+}
+
+func (b *Backfiller) GetLastBlockId() (uint64,error) {
+	ctx := context.Background()
+	id, err := b.client.BlockNumber(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 func extractEvent(log types.Log) domain.Event {

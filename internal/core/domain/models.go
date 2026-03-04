@@ -9,9 +9,11 @@ type Event struct {
     Topics []string
 }
 
-type RawBlockData struct {}
-type RawEventData struct {}
-type RawTransactionData struct {}
+type BlockTxsEvents struct{
+    Block Block
+    Txs []Transaction
+    Events []Event
+}
 
 type Block struct {
 	Hash string

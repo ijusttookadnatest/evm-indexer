@@ -64,6 +64,18 @@ func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transacti
 	return nil
 }
 
+func (repo *IndexerRepository) GetLastIndexedId() (uint64, error) {
+	var id uint64
+	err := repo.db.QueryRow(`SELECT MAX(block_id) FROM blocks;`).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	if id == 0 {
+		return 0, domain.ErrNotFound
+	}
+	return id, nil
+}
+
 func (repo *IndexerRepository) Delete(blockId int) error {
 	_, err := repo.db.Exec(`
 		DELETE FROM blocks WHERE block_id = $1;

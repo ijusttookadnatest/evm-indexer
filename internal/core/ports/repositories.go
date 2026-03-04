@@ -19,4 +19,5 @@ type QueryRepository interface {
 type IndexerRepository interface {
 	Create(block domain.Block, txs []domain.Transaction, events []domain.Event) error
 	Delete(blockId int) error
+	GetLastIndexedId() (uint64, error)
 }
