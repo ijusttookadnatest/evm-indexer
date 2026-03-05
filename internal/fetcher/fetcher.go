@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -15,31 +17,31 @@ import (
 	"github.com/cenkalti/backoff/v5"
 )
 
-// EVMClient is the minimal interface needed to fetch block data.
-// *ethclient.Client doesn't expose CallContext directly (it's on rpc.Client),
-// so NewBackfiller wraps it with one extra method.
-type EVMClient interface {
-	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
-	BlockReceipts(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]*types.Receipt, error)
-	BlockNumber(ctx context.Context) (uint64, error)
+type ethWrapper struct { 
+	*ethclient.Client 
 }
-
-type ethWrapper struct{ *ethclient.Client }
 
 func (w *ethWrapper) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
 	return w.Client.Client().CallContext(ctx, result, method, args...)
 }
 
-type Backfiller struct {
+type EVMClient interface {
+	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
+	BlockReceipts(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]*types.Receipt, error)
+	BlockNumber(ctx context.Context) (uint64, error)
+	SubscribeNewHead(ctx context.Context, ch chan<- *types.Header) (ethereum.Subscription, error)
+}
+
+type Fetcher struct {
 	client EVMClient
 }
 
-func NewBackfiller(url string) (*Backfiller, error) {
+func NewFetcher(url string) (*Fetcher, error) {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, err
 	}
-	return &Backfiller{client: &ethWrapper{client}}, nil
+	return &Fetcher{client: &ethWrapper{client}}, nil
 }
 
 type RPCTransaction struct {
@@ -73,7 +75,7 @@ func wrapRetryError(err error) error {
 	return err
 }
 
-func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
+func (b *Fetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	ctx := context.Background()
 	idHex := fmt.Sprintf("0x%x", id)
 	body := new(RPCBlock)
@@ -82,7 +84,8 @@ func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 		err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true)
 		return struct{}{}, wrapRetryError(err)
 	}
-	_, err := backoff.Retry(ctx, callContext, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
+	_, err := backoff.Retry(ctx, callContext, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
 	if err != nil {
 		return domain.BlockTxsEvents{}, err
 	}
@@ -91,7 +94,7 @@ func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
 		return receipts, wrapRetryError(err)
 	}
-	receipts, err := backoff.Retry(ctx, blockReceipts, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	receipts, err := backoff.Retry(ctx, blockReceipts, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
 	if err != nil {
 		return domain.BlockTxsEvents{}, err
 	}
@@ -113,57 +116,42 @@ func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	return domain.BlockTxsEvents{Block: block, Txs: txs, Events: events}, nil
 }
 
-func (b *Backfiller) GetLastBlockId() (uint64, error) {
+func (b *Fetcher) GetLastBlockId() (uint64, error) {
 	blockNumber := func() (uint64,error) {
 		res, err := b.client.BlockNumber(context.Background())
 		return res, wrapRetryError(err)
 	}
-	return backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	return backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
 }
 
-func extractEvent(log types.Log) domain.Event {
-	return domain.Event{
-		BlockId:  log.BlockNumber,
-		TxHash:   log.TxHash.Hex(),
-		LogIndex: uint64(log.Index),
-		Emitter:  log.Address.Hex(),
-		Datas:    string(log.Data),
-		Topics:   extractTopics(log.Topics),
-	}
-}
 
-func extractTransaction(tx RPCTransaction, receipt types.Receipt) domain.Transaction {
-	var to *string
-	if tx.To != nil {
-		s := tx.To.Hex()
-		to = &s
+func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
+	op := func() (struct{},error) {
+		newHeader := make(chan *types.Header)
+		sub, err := f.client.SubscribeNewHead(ctx, newHeader)
+		if err != nil {
+			return struct{}{}, backoff.Permanent(err)
+		}
+	
+		for {
+			select {
+			case result := <-newHeader: {
+				c <- result.Number.Uint64()
+			}
+			case err := <-sub.Err(): {
+				sub.Unsubscribe()
+				return struct{}{}, err
+			}
+			case <-ctx.Done(): {
+				sub.Unsubscribe()
+				return struct{}{}, backoff.Permanent(ctx.Err())
+			}
+			}
+		}
 	}
-	return domain.Transaction{
-		BlockId: receipt.BlockNumber.Uint64(),
-		Hash:    tx.Hash.Hex(),
-		From:    tx.From.Hex(),
-		To:      to,
-		GasUsed: uint64(receipt.CumulativeGasUsed),
-		Status:  receipt.Status,
+	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
+	if err != nil {
+		return err
 	}
-}
-
-func extractBlock(body RPCBlock) domain.Block {
-	return domain.Block{
-		Id:         uint64(body.Number),
-		Hash:       body.Hash.Hex(),
-		ParentHash: body.ParentHash.Hex(),
-		Miner:      body.Miner.Hex(),
-		GasLimit:   uint64(body.GasLimit),
-		GasUsed:    uint64(body.GasUsed),
-		Timestamp:  uint64(body.Timestamp),
-	}
-}
-
-func extractTopics(topics []common.Hash) []string {
-	result := make([]string, len(topics))
-	for i, topic := range topics {
-		result[i] = topic.Hex()
-	}
-	return result
+	return nil
 }

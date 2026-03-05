@@ -5,7 +5,9 @@ import (
 	"errors"
 	"math/big"
 	"testing"
+	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,12 +15,34 @@ import (
 )
 
 type mockEVMClient struct {
-	block       RPCBlock
-	receipts    []*types.Receipt
-	lastBlockId uint64
-	callErr     error
-	receiptsErr error
-	blockNumErr error
+	block        RPCBlock
+	receipts     []*types.Receipt
+	lastBlockId  uint64
+	callErr      error
+	receiptsErr  error
+	blockNumErr  error
+	subscribeErr error
+	subHeaders   chan *types.Header
+	subErrCh     chan error
+}
+
+type mockSubscription struct {
+	errCh chan error
+}
+
+func (m *mockSubscription) Unsubscribe() {}
+func (m *mockSubscription) Err() <-chan error { return m.errCh }
+
+func (m *mockEVMClient) SubscribeNewHead(_ context.Context, ch chan<- *types.Header) (ethereum.Subscription, error) {
+	if m.subscribeErr != nil {
+		return nil, m.subscribeErr
+	}
+	go func() {
+		for h := range m.subHeaders {
+			ch <- h
+		}
+	}()
+	return &mockSubscription{errCh: m.subErrCh}, nil
 }
 
 func (m *mockEVMClient) CallContext(_ context.Context, result interface{}, _ string, _ ...interface{}) error {
@@ -38,6 +62,62 @@ func (m *mockEVMClient) BlockReceipts(_ context.Context, _ rpc.BlockNumberOrHash
 
 func (m *mockEVMClient) BlockNumber(_ context.Context) (uint64, error) {
 	return m.lastBlockId, m.blockNumErr
+}
+
+// --- Subscribe tests ---
+
+func TestSubscribe(t *testing.T) {
+	t.Run("forwards block numbers to output channel", func(t *testing.T) {
+		subHeaders := make(chan *types.Header, 1)
+		subErrCh := make(chan error)
+		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
+		f := &Fetcher{client: client}
+		out := make(chan uint64, 1)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		subHeaders <- &types.Header{Number: big.NewInt(42)}
+		go f.Subscribe(ctx, out)
+
+		select {
+		case got := <-out:
+			if got != 42 {
+				t.Errorf("want 42, got %d", got)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timeout waiting for block number")
+		}
+	})
+
+	t.Run("returns error when SubscribeNewHead fails", func(t *testing.T) {
+		client := &mockEVMClient{subscribeErr: errors.New("connection refused")}
+		f := &Fetcher{client: client}
+		err := f.Subscribe(context.Background(), make(chan uint64))
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("stops on context cancellation", func(t *testing.T) {
+		subHeaders := make(chan *types.Header)
+		subErrCh := make(chan error)
+		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
+		f := &Fetcher{client: client}
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error, 1)
+		go func() { done <- f.Subscribe(ctx, make(chan uint64)) }()
+
+		cancel()
+
+		select {
+		case err := <-done:
+			if !errors.Is(err, context.Canceled) {
+				t.Errorf("want context.Canceled, got %v", err)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("Subscribe did not return after context cancel")
+		}
+	})
 }
 
 // --- FetchBlock tests ---
@@ -124,7 +204,7 @@ func TestFetchBlock(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Backfiller{client: tt.client}
+			b := &Fetcher{client: tt.client}
 			got, err := b.FetchBlock(tt.blockId)
 
 			if tt.wantErr {

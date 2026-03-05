@@ -117,7 +117,7 @@ func TestFetchBlock_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Backfiller{client: tt.client}
+			b := &Fetcher{client: tt.client}
 			_, err := b.FetchBlock(1)
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
@@ -194,7 +194,7 @@ func TestFetchBlockReceipts_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Backfiller{client: tt.client}
+			b := &Fetcher{client: tt.client}
 			_, err := b.FetchBlock(1)
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
@@ -266,7 +266,7 @@ func TestGetLastBlockId_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Backfiller{client: tt.client}
+			b := &Fetcher{client: tt.client}
 			got, err := b.GetLastBlockId()
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
