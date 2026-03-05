@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/cenkalti/backoff/v5"
 )
 
 // EVMClient is the minimal interface needed to fetch block data.
@@ -57,16 +60,38 @@ type RPCBlock struct {
 	Transactions []RPCTransaction `json:"transactions"`
 }
 
+
+func wrapRetryError(err error) error {
+	if err == nil {return err}
+	var rpcErr rpc.Error
+	if errors.As(err, &rpcErr) {
+		code := rpcErr.ErrorCode()
+		if code >= -32602 && code <= -32600 {
+			return backoff.Permanent(err)
+		}
+	}
+	return err
+}
+
 func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	ctx := context.Background()
 	idHex := fmt.Sprintf("0x%x", id)
 	body := new(RPCBlock)
 
-	err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true)
+	callContext := func() (struct{},error) {
+		err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true)
+		return struct{}{}, wrapRetryError(err)
+	}
+	_, err := backoff.Retry(ctx, callContext, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
 		return domain.BlockTxsEvents{}, err
 	}
-	receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
+
+	blockReceipts := func() ([]*types.Receipt,error) {
+		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
+		return receipts, wrapRetryError(err)
+	}
+	receipts, err := backoff.Retry(ctx, blockReceipts, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
 		return domain.BlockTxsEvents{}, err
 	}
@@ -89,7 +114,11 @@ func (b *Backfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 }
 
 func (b *Backfiller) GetLastBlockId() (uint64, error) {
-	return b.client.BlockNumber(context.Background())
+	blockNumber := func() (uint64,error) {
+		res, err := b.client.BlockNumber(context.Background())
+		return res, wrapRetryError(err)
+	}
+	return backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 }
 
 func extractEvent(log types.Log) domain.Event {
