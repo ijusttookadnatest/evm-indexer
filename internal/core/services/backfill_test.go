@@ -59,80 +59,82 @@ func (m *mockBackfiller) Subscribe(_ context.Context, _ chan<- uint64, _ chan<- 
 func TestBackfill(t *testing.T) {
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
 	tests := []struct {
-		name        string
-		repo        *mockIndexerRepo
-		backfiller  *mockBackfiller
-		from        uint64
-		wantCalls   int
-		wantErr     bool
-		wantCursor  uint64
+		name       string
+		repo       *mockIndexerRepo
+		backfiller *mockBackfiller
+		from       uint64
+		targetId   uint64
+		wantCalls  int
+		wantErr    bool
+		wantCursor uint64
 	}{
 		{
 			name:       "FreshDB_FiveBlocks (0→5)",
 			repo:       &mockIndexerRepo{cursor: 0},
-			backfiller: &mockBackfiller{lastBlockId: 5},
+			backfiller: &mockBackfiller{},
 			from:       0,
+			targetId:   5,
 			wantCalls:  6,
 			wantCursor: 5,
 		},
 		{
 			name:       "FreshDB_OneBlock (10→10)",
 			repo:       &mockIndexerRepo{cursor: 0},
-			backfiller: &mockBackfiller{lastBlockId: 10},
+			backfiller: &mockBackfiller{},
 			from:       10,
+			targetId:   10,
 			wantCalls:  1,
 			wantCursor: 10,
 		},
 		{
 			name:       "FreshDB_OneThousandBlocks (0→1000)",
 			repo:       &mockIndexerRepo{cursor: 0},
-			backfiller: &mockBackfiller{lastBlockId: 1000},
+			backfiller: &mockBackfiller{},
 			from:       0,
+			targetId:   1000,
 			wantCalls:  1001,
 			wantCursor: 1000,
 		},
 		{
 			name:       "Resume_FiveBlocks (cursor=6, 7→10)",
 			repo:       &mockIndexerRepo{cursor: 6},
-			backfiller: &mockBackfiller{lastBlockId: 10},
+			backfiller: &mockBackfiller{},
 			from:       0,
+			targetId:   10,
 			wantCalls:  4,
 			wantCursor: 10,
 		},
 		{
 			name:       "already up to date (cursor=10, target=10)",
 			repo:       &mockIndexerRepo{cursor: 10},
-			backfiller: &mockBackfiller{lastBlockId: 10},
+			backfiller: &mockBackfiller{},
 			from:       0,
+			targetId:   10,
 			wantCalls:  0,
 			wantCursor: 0, // UpdateBackfillCursor not called
 		},
 		{
 			name:       "GetBackfillCursor error",
 			repo:       &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
-			backfiller: &mockBackfiller{lastBlockId: 10},
+			backfiller: &mockBackfiller{},
 			from:       0,
-			wantErr:    true,
-		},
-		{
-			name:       "GetLastBlockId error",
-			repo:       &mockIndexerRepo{cursor: 0},
-			backfiller: &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
-			from:       0,
+			targetId:   10,
 			wantErr:    true,
 		},
 		{
 			name:       "repo.Create error propagates",
 			repo:       &mockIndexerRepo{cursor: 0, createErr: errors.New("db write failed")},
-			backfiller: &mockBackfiller{lastBlockId: 3},
+			backfiller: &mockBackfiller{},
 			from:       0,
+			targetId:   3,
 			wantErr:    true,
 		},
 		{
 			name:       "FetchBlock error propagates",
 			repo:       &mockIndexerRepo{cursor: 0},
-			backfiller: &mockBackfiller{lastBlockId: 100, fetchErr: errors.New("rpc timeout")},
+			backfiller: &mockBackfiller{fetchErr: errors.New("rpc timeout")},
 			from:       0,
+			targetId:   100,
 			wantErr:    true,
 		},
 	}
@@ -140,7 +142,7 @@ func TestBackfill(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewIndexerService(tt.repo, tt.backfiller)
-			err := svc.Backfill(tt.from, 2)
+			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

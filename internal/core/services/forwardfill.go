@@ -5,9 +5,7 @@ import (
 	"log/slog"
 )
 
-func (s *IndexerService) Forwardfill() error {
-	ctx := context.Background()
-
+func (s *IndexerService) forwardfill(ctx context.Context) error {
 	c := make(chan uint64)
 	e := make(chan error, 1)
 	go s.fetcher.Subscribe(ctx, c, e)
@@ -20,7 +18,7 @@ func (s *IndexerService) Forwardfill() error {
 				slog.Error("forwardfill: failed to fetch block", "blockId", id, "err", err)
 				return err
 			}
-			slog.Info("worker: block fetched", "blockId", id)
+			slog.Info("forwardfill: block fetched", "blockId", id)
 			err = s.repo.Create(data.Block, data.Txs, data.Events)
 			if err != nil {
 				slog.Error("forwardfill: failed to save block", "blockId", data.Block.Id, "err", err)

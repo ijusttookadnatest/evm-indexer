@@ -85,7 +85,7 @@ func loader(ctx context.Context, chanLastIndex chan uint64, chanResults <-chan d
 }
 
 
-func (service *IndexerService) Backfill(from uint64, concurrencyF int) error {
+func (service *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int) error {
 	var err error
 	var ok bool
 	var curr uint64
@@ -97,11 +97,6 @@ func (service *IndexerService) Backfill(from uint64, concurrencyF int) error {
 	}
 
 	if cursor == 0 {curr = from} else {curr = cursor + 1}
-
-	targetId, err := service.fetcher.GetLastBlockId()
-	if err != nil {
-		return err
-	}
 
 	if curr > targetId {
 		slog.Info("backfill: already up to date")
@@ -154,6 +149,10 @@ func (service *IndexerService) Backfill(from uint64, concurrencyF int) error {
 			slog.Info("backfill: error in loader, break loop")
 			break curr
 		}
+		case <-ctx.Done(): {
+			slog.Error("backfill: cancel from context with error", "err", ctx.Err())
+			break curr
+		}
 		}
 	}
 
@@ -172,6 +171,10 @@ func (service *IndexerService) Backfill(from uint64, concurrencyF int) error {
 	if loaderErr != nil {
 		slog.Error("backfill: loader error", "err", loaderErr)
 		return loaderErr
+	}
+	if ctx.Err() != nil {
+		slog.Error("backfill: context cancelled", "err", ctx.Err())
+		return ctx.Err()
 	}
 	slog.Info("backfill: completed successfully", "lastIndexed", targetId)
 	return nil
