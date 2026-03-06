@@ -17,9 +17,8 @@ type QueryService interface {
 }
 
 type IndexerService interface {
-	Backfill(from, to uint64) error
+	Backfill(from uint64, concurrencyF int) error
 	ForwardFill() error
-	// Create(block *domain.Block, txs []domain.Transaction, events []domain.Event) error
 	// Delete(blockId int) error
 }
 

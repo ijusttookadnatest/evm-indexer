@@ -73,11 +73,12 @@ func TestSubscribe(t *testing.T) {
 		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
 		f := &Fetcher{client: client}
 		out := make(chan uint64, 1)
+		errCh := make(chan error, 1)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		subHeaders <- &types.Header{Number: big.NewInt(42)}
-		go f.Subscribe(ctx, out)
+		go f.Subscribe(ctx, out, errCh)
 
 		select {
 		case got := <-out:
@@ -89,12 +90,19 @@ func TestSubscribe(t *testing.T) {
 		}
 	})
 
-	t.Run("returns error when SubscribeNewHead fails", func(t *testing.T) {
+	t.Run("sends error when SubscribeNewHead fails", func(t *testing.T) {
 		client := &mockEVMClient{subscribeErr: errors.New("connection refused")}
 		f := &Fetcher{client: client}
-		err := f.Subscribe(context.Background(), make(chan uint64))
-		if err == nil {
-			t.Fatal("expected error, got nil")
+		errCh := make(chan error, 1)
+		go f.Subscribe(context.Background(), make(chan uint64, 1), errCh)
+
+		select {
+		case err := <-errCh:
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timeout waiting for error")
 		}
 	})
 
@@ -104,13 +112,13 @@ func TestSubscribe(t *testing.T) {
 		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
 		f := &Fetcher{client: client}
 		ctx, cancel := context.WithCancel(context.Background())
-		done := make(chan error, 1)
-		go func() { done <- f.Subscribe(ctx, make(chan uint64)) }()
+		errCh := make(chan error, 1)
+		go f.Subscribe(ctx, make(chan uint64), errCh)
 
 		cancel()
 
 		select {
-		case err := <-done:
+		case err := <-errCh:
 			if !errors.Is(err, context.Canceled) {
 				t.Errorf("want context.Canceled, got %v", err)
 			}
