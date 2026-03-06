@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 	"log/slog"
@@ -74,6 +73,10 @@ func loader(ctx context.Context, chanLastIndex chan uint64, chanResults <-chan d
 					}
 					slog.Info("loader: continue?: ", "ok", ok)
 				}
+				err := repo.UpdateBackfillCursor(curr - 1)
+				if err != nil {
+					return err
+				}
 				chanLastIndex <- curr - 1
 			}
 		}
@@ -88,13 +91,12 @@ func (service *IndexerService) Backfill(from uint64, concurrencyF int) error {
 	var curr uint64
 	var i uint64
 
-	indexedId, err := service.repo.GetLastIndexedId()
-	dbEmpty := errors.Is(err, domain.ErrNotFound)
-	if err != nil && !dbEmpty {
+	cursor, err := service.repo.GetBackfillCursor()
+	if err != nil {
 		return err
 	}
 
-	if dbEmpty {curr = from} else {curr = indexedId + 1}
+	if cursor == 0 {curr = from} else {curr = cursor + 1}
 
 	targetId, err := service.fetcher.GetLastBlockId()
 	if err != nil {

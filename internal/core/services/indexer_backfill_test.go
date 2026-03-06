@@ -9,16 +9,22 @@ import (
 )
 
 type mockIndexerRepo struct {
-	lastIndexedId uint64
-	lastIdErr     error
+	cursor        uint64
+	cursorErr     error
+	updatedCursor uint64
 	createErr     error
 	createCalls   int
 	deleteErr     error
 	deleteCalls   int
 }
 
-func (m *mockIndexerRepo) GetLastIndexedId() (uint64, error) {
-	return m.lastIndexedId, m.lastIdErr
+func (m *mockIndexerRepo) GetBackfillCursor() (uint64, error) {
+	return m.cursor, m.cursorErr
+}
+
+func (m *mockIndexerRepo) UpdateBackfillCursor(id uint64) error {
+	m.updatedCursor = id
+	return nil
 }
 
 func (m *mockIndexerRepo) Create(_ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
@@ -53,72 +59,78 @@ func (m *mockBackfiller) Subscribe(_ context.Context, _ chan<- uint64, _ chan<- 
 func TestBackfill(t *testing.T) {
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
 	tests := []struct {
-		name       string
-		repo       *mockIndexerRepo
-		backfiller *mockBackfiller
-		from       uint64
-		wantCalls  int
-		wantErr    bool
+		name        string
+		repo        *mockIndexerRepo
+		backfiller  *mockBackfiller
+		from        uint64
+		wantCalls   int
+		wantErr     bool
+		wantCursor  uint64
 	}{
 		{
-			name:       "WithoutDB_FiveBlocks (0→5)",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound},
+			name:       "FreshDB_FiveBlocks (0→5)",
+			repo:       &mockIndexerRepo{cursor: 0},
 			backfiller: &mockBackfiller{lastBlockId: 5},
 			from:       0,
 			wantCalls:  6,
+			wantCursor: 5,
 		},
 		{
-			name:       "WithoutDB_OneBlock (10→10)",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound},
+			name:       "FreshDB_OneBlock (10→10)",
+			repo:       &mockIndexerRepo{cursor: 0},
 			backfiller: &mockBackfiller{lastBlockId: 10},
 			from:       10,
 			wantCalls:  1,
+			wantCursor: 10,
 		},
 		{
-			name:       "WithoutDB_OneThousandBlocks (0→1000)",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound},
+			name:       "FreshDB_OneThousandBlocks (0→1000)",
+			repo:       &mockIndexerRepo{cursor: 0},
 			backfiller: &mockBackfiller{lastBlockId: 1000},
 			from:       0,
 			wantCalls:  1001,
+			wantCursor: 1000,
 		},
 		{
-			name:       "WithDB_FiveBlocks (lastIndexed=6, 7→10)",
-			repo:       &mockIndexerRepo{lastIndexedId: 6},
+			name:       "Resume_FiveBlocks (cursor=6, 7→10)",
+			repo:       &mockIndexerRepo{cursor: 6},
 			backfiller: &mockBackfiller{lastBlockId: 10},
 			from:       0,
 			wantCalls:  4,
+			wantCursor: 10,
 		},
 		{
-			name:       "already up to date (lastIndexed=10, target=10)",
-			repo:       &mockIndexerRepo{lastIndexedId: 10},
+			name:       "already up to date (cursor=10, target=10)",
+			repo:       &mockIndexerRepo{cursor: 10},
 			backfiller: &mockBackfiller{lastBlockId: 10},
 			from:       0,
 			wantCalls:  0,
+			wantCursor: 0, // UpdateBackfillCursor not called
 		},
 		{
-			name:       "GetLastIndexedId non-ErrNotFound error",
-			repo:       &mockIndexerRepo{lastIdErr: errors.New("db connection lost")},
+			name:       "GetBackfillCursor error",
+			repo:       &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
 			backfiller: &mockBackfiller{lastBlockId: 10},
 			from:       0,
 			wantErr:    true,
 		},
 		{
 			name:       "GetLastBlockId error",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound},
+			repo:       &mockIndexerRepo{cursor: 0},
 			backfiller: &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
 			from:       0,
 			wantErr:    true,
 		},
 		{
 			name:       "repo.Create error propagates",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound, createErr: errors.New("db write failed")},
+			repo:       &mockIndexerRepo{cursor: 0, createErr: errors.New("db write failed")},
 			backfiller: &mockBackfiller{lastBlockId: 3},
 			from:       0,
 			wantErr:    true,
 		},
 		{
 			name:       "FetchBlock error propagates",
-			repo:       &mockIndexerRepo{lastIdErr: domain.ErrNotFound},
+			repo:       &mockIndexerRepo{cursor: 0},
 			backfiller: &mockBackfiller{lastBlockId: 100, fetchErr: errors.New("rpc timeout")},
 			from:       0,
 			wantErr:    true,
@@ -140,6 +152,9 @@ func TestBackfill(t *testing.T) {
 			}
 			if tt.repo.createCalls != tt.wantCalls {
 				t.Errorf("expected %d Create calls, got %d", tt.wantCalls, tt.repo.createCalls)
+			}
+			if tt.repo.updatedCursor != tt.wantCursor {
+				t.Errorf("cursor: want %d, got %d", tt.wantCursor, tt.repo.updatedCursor)
 			}
 		})
 	}

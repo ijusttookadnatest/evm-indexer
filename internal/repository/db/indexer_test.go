@@ -42,7 +42,7 @@ func TestCreate_Integration(t *testing.T) {
 		}
 	})
 
-	t.Run("create duplicate block fails", func(t *testing.T) {
+	t.Run("create duplicate block is idempotent", func(t *testing.T) {
 		truncateAll(t)
 		seedFixtures(t)
 
@@ -51,9 +51,39 @@ func TestCreate_Integration(t *testing.T) {
 			GasLimit: 30000000, GasUsed: 10000000, Miner: "0xminer", Timestamp: 1800000000,
 		}
 		err := indexerRepo.Create(block, nil, nil)
-		if err == nil {
-			t.Fatal("should return an error for duplicate block_id")
+		if err != nil {
+			t.Fatalf("duplicate block should be silently ignored, got: %v", err)
 		}
+	})
+}
+
+func TestBackfillCursor_Integration(t *testing.T) {
+	indexerRepo := NewIndexerRepository(testDB)
+
+	t.Run("initial cursor is 0", func(t *testing.T) {
+		cursor, err := indexerRepo.GetBackfillCursor()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cursor != 0 {
+			t.Errorf("want 0, got %d", cursor)
+		}
+	})
+
+	t.Run("update and read cursor", func(t *testing.T) {
+		err := indexerRepo.UpdateBackfillCursor(12345)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cursor, err := indexerRepo.GetBackfillCursor()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cursor != 12345 {
+			t.Errorf("want 12345, got %d", cursor)
+		}
+		// reset
+		_ = indexerRepo.UpdateBackfillCursor(0)
 	})
 }
 

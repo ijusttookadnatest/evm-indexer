@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 
 CREATE TABLE IF NOT EXISTS blocks (
-    block_id BIGINT NOT NULL,
-    block_hash VARCHAR(66) NOT NULL,
+    block_id BIGINT NOT NULL UNIQUE,
+    block_hash VARCHAR(66) NOT NULL UNIQUE,
     parent_hash VARCHAR(66) NOT NULL,
     gas_limit BIGINT NOT NULL,
     gas_used BIGINT NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 CREATE TABLE IF NOT EXISTS transactions (
     block_id INT REFERENCES blocks(block_id) ON DELETE CASCADE,
-    tx_hash VARCHAR(66) NOT NULL,
+    tx_hash VARCHAR(66) NOT NULL UNIQUE,
     from_addr VARCHAR(42) NOT NULL,
     to_addr  VARCHAR(42),
     gas_used BIGINT NOT NULL,
@@ -41,6 +41,12 @@ CREATE INDEX idx_tx_from ON transactions(from_addr);
 CREATE INDEX idx_event_emitter ON events(emitter);
 CREATE INDEX idx_event_gin_topics ON events USING GIN(topics);
 
+CREATE TABLE IF NOT EXISTS backfill_cursor (
+    last_block_id BIGINT NOT NULL DEFAULT 0
+);
+
+INSERT INTO backfill_cursor (last_block_id) VALUES (0);
+
 -- +goose StatementEnd
 
 -- +goose Down
@@ -54,6 +60,7 @@ DROP INDEX IF EXISTS idx_tx_from;
 DROP INDEX IF EXISTS idx_event_emitter;
 DROP INDEX IF EXISTS idx_event_gin_topics;
 
+DROP TABLE IF EXISTS backfill_cursor;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS blocks;
