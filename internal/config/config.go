@@ -16,6 +16,8 @@ type Config struct {
 	PlaygroundEnabled bool
 	RangeMaxTime uint64
 	OffsetMax	uint64
+	From		uint64
+	ConcurrencyF int
 }
 
 
@@ -48,6 +50,14 @@ func Load(path string) (*Config,error) {
 	if err != nil {
 		return nil, err
 	}
+	from, err := strconv.ParseUint(env["FROM"], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	concurrencyF, err := strconv.Atoi(env["CONCURRENCY_FACTOR"])
+	if err != nil {
+		return nil, err
+	}
 
 	return &Config{
 		PostgresDSN: fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=disable", env["POSTGRES_USER"], env["POSTGRES_PASSWORD"], env["POSTGRES_HOST"], env["POSTGRES_PORT"], env["POSTGRES_DB"]),
@@ -57,5 +67,7 @@ func Load(path string) (*Config,error) {
 		PlaygroundEnabled: pgEnabled,
 		RangeMaxTime: rangeMaxTime,
 		OffsetMax: offsetMax,
+		From: from,
+		ConcurrencyF: concurrencyF,
 	}, nil
 }

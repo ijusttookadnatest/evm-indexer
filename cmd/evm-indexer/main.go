@@ -2,7 +2,9 @@ package main
 
 import (
 	"github/ijusttookadnatest/indexer-evm/internal/config"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	service "github/ijusttookadnatest/indexer-evm/internal/core/services"
+	"github/ijusttookadnatest/indexer-evm/internal/fetcher"
 	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql"
 	"github/ijusttookadnatest/indexer-evm/internal/handlers/rest"
 	"github/ijusttookadnatest/indexer-evm/internal/handlers/ws"
@@ -17,20 +19,32 @@ func main() {
 		return
 	}
 
+	indexerStreams := domain.IndexerStreams {
+		Block: make(chan any, 10),
+		Txs: make(chan any, 10),
+		Events: make(chan any, 10),
+	}
+
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
 		return
 	}
 
+	indexerRepo := repository.NewIndexerRepository(db)
+	fetcher, err := fetcher.NewFetcher(cfg.Rpc)
+	if err != nil {
+		return
+	}
+	indexerService := service.NewIndexerService(indexerRepo, fetcher, indexerStreams)
+	indexerService.Run(cfg.From, cfg.ConcurrencyF)
+
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
 	handlers := []http.Handler{
-		ws.NewRouter(),
+		ws.NewRouter(indexerStreams),
 		rest.NewRouter(queryService),
 		graphql.NewRouter(queryService, cfg.PlaygroundEnabled),
 	}
-
 	server := server.NewHTTPServer(handlers, cfg.Port)
-
 	server.Run()
 }
