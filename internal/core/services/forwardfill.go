@@ -7,8 +7,11 @@ import (
 
 func (s *IndexerService) forwardfill(ctx context.Context) error {
 	c := make(chan uint64)
-	e := make(chan error, 1)
-	go s.fetcher.Subscribe(ctx, c, e)
+	errChan := make(chan error, 1)
+	
+	go func() {
+		errChan <- s.fetcher.Subscribe(ctx, c)
+	}()
 
 	for {
 		select {
@@ -24,14 +27,14 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 			s.indexerStreams.Txs <- data.Txs
 			s.indexerStreams.Events <- data.Events
 			slog.Info("forwardfill: data sent to indexer streams")
-			
+
 			err = s.repo.Create(data.Block, data.Txs, data.Events)
 			if err != nil {
 				slog.Error("forwardfill: failed to save block", "blockId", data.Block.Id, "err", err)
 				return err
 			}
 		}
-		case err := <-e :{
+		case err := <-errChan :{
 			slog.Error("forwardfill: error received from subscribe", "err", err)
 			return err
 		}

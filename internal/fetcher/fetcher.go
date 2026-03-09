@@ -125,9 +125,8 @@ func (b *Fetcher) GetLastBlockId() (uint64, error) {
 }
 
 
-func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64, e chan<- error) {
+func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 	defer close(c)
-	defer close(e)
 	
 	op := func() (struct{},error) {
 		newHeader := make(chan *types.Header)
@@ -153,7 +152,5 @@ func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64, e chan<- error
 		}
 	}
 	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
-	if err != nil {
-		e <- err
-	}
+	return err
 }

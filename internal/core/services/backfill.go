@@ -106,8 +106,8 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 	numWorkers := runtime.NumCPU() * concurrencyF + 1
 	numJobs := numWorkers
 
-	gWorkers, ctxWorkers := errgroup.WithContext(context.Background())
-	gLoader, ctxLoader := errgroup.WithContext(context.Background())
+	gWorkers, ctxWorkers := errgroup.WithContext(ctx)
+	gLoader, ctxLoader := errgroup.WithContext(ctx)
 
 	chanResults := make(chan domain.BlockTxsEvents, numJobs)
 	chanJobs := make(chan uint64, numJobs)

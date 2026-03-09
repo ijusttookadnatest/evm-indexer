@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -33,9 +35,29 @@ func NewHTTPServer(routers []http.Handler, port string) *Server {
 	}
 }
 
-func (s *Server) Run() error {
-	if err := s.Server.ListenAndServe(); err != nil {
-		return err
-	}
+func (s *Server) Run(ctx context.Context) error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- s.Server.ListenAndServe()
+	}()
+
+	select {
+        case err := <-errChan:
+            slog.Info("Server error: ", "err", err)
+        case sig := <-ctx.Done():
+            slog.Info("Received shutdown signal: ","sig", sig)
+    }
+
+    slog.Info("Server is shutting down...")
+
+    ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+    defer cancel()
+
+    if err := s.Server.Shutdown(ctx); err != nil {
+        slog.Info("Server shutdown error: ", "err", err)
+        return err
+    }
+
+    slog.Info("Server exited properly")
 	return nil
 }

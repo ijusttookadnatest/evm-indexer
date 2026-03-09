@@ -18,8 +18,8 @@ func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, inde
 	return &IndexerService{repo: repo, fetcher:fetcher, indexerStreams:indexerStreams}
 }
 
-func (i *IndexerService) Run(from uint64, concurrencyF int) error {
-	parentCtx, cancel := context.WithCancel(context.Background())
+func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int) error {
+	parentCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	g, ctx := errgroup.WithContext(parentCtx)

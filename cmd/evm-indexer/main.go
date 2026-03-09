@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
-	
+	"os/signal"
+	"syscall"
+
 	"github/ijusttookadnatest/indexer-evm/internal/config"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	service "github/ijusttookadnatest/indexer-evm/internal/core/services"
@@ -14,14 +17,16 @@ import (
 	"github/ijusttookadnatest/indexer-evm/internal/handlers/ws"
 	repository "github/ijusttookadnatest/indexer-evm/internal/repository/db"
 	"github/ijusttookadnatest/indexer-evm/internal/server"
+
+	"golang.org/x/sync/errgroup"
 )
 
-func run() error {
+func run(ctx context.Context) error {
 	cfg, err := config.Load(".env")
 	if err != nil {
 		return err
 	}
-	
+
 	indexerStreams := domain.IndexerStreams {
 		Block: make(chan any, 10),
 		Txs: make(chan any, 10),
@@ -39,7 +44,6 @@ func run() error {
 		return err
 	}
 	indexerService := service.NewIndexerService(indexerRepo, fetcher, indexerStreams)
-	indexerService.Run(cfg.From, cfg.ConcurrencyF)
 	
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
@@ -49,12 +53,24 @@ func run() error {
 		graphql.NewRouter(queryService, cfg.PlaygroundEnabled),
 	}
 	server := server.NewHTTPServer(handlers, cfg.Port)
-	server.Run()
-	return nil
+	
+	g, context := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return indexerService.Run(context, cfg.From, cfg.ConcurrencyF)
+	})
+	
+	g.Go(func() error {
+		return server.Run(context)
+	})
+
+	return g.Wait()
 }
 
 func main() {
-	if err := run() ; err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	if err := run(ctx) ; err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
