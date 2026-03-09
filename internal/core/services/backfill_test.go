@@ -141,7 +141,7 @@ func TestBackfill(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewIndexerService(tt.repo, tt.backfiller)
+			svc := NewIndexerService(tt.repo, tt.backfiller, domain.IndexerStreams{})
 			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2)
 			if tt.wantErr {
 				if err == nil {

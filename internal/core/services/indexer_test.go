@@ -4,52 +4,60 @@ import (
 	"errors"
 	"testing"
 
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+
 )
 
 func TestRun(t *testing.T) {
 	tests := []struct {
 		name    string
-		repo    ports.IndexerRepository
-		fetcher ports.Fetcher
-		from    uint64
-		wantErr bool
+		repo          ports.IndexerRepository
+		fetcher       ports.Fetcher
+		indexerStreams domain.IndexerStreams
+		from          uint64
+		wantErr       bool
 	}{
 		{
 			name:    "GetLastBlockId error returns immediately",
 			repo:    &mockIndexerRepo{},
 			fetcher: &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
+			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
 			wantErr: true,
 		},
 		{
 			name:    "GetBackfillCursor error propagates",
 			repo:    &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
 			fetcher: &mockBackfiller{lastBlockId: 5},
+			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
 			wantErr: true,
 		},
 		{
 			name:    "FetchBlock error propagates",
 			repo:    &mockIndexerRepo{},
 			fetcher: &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
+			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
 			wantErr: true,
 		},
 		{
 			name:    "repo.Create error propagates",
 			repo:    &mockIndexerRepo{createErr: errors.New("db write failed")},
 			fetcher: &mockBackfiller{lastBlockId: 2},
+			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
 			wantErr: true,
 		},
 		{
 			name:    "Subscribe error propagates",
 			repo:    &mockIndexerRepo{},
 			fetcher: &mockFFFetcher{subErr: errors.New("ws disconnected")},
+			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewIndexerService(tt.repo, tt.fetcher)
+			svc := NewIndexerService(tt.repo, tt.fetcher, tt.indexerStreams)
 			err := svc.Run(tt.from, 1)
 			if tt.wantErr {
 				if err == nil {

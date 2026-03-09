@@ -19,6 +19,12 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 				return err
 			}
 			slog.Info("forwardfill: block fetched", "blockId", id)
+
+			s.indexerStreams.Block <- data.Block
+			s.indexerStreams.Txs <- data.Txs
+			s.indexerStreams.Events <- data.Events
+			slog.Info("forwardfill: data sent to indexer streams")
+			
 			err = s.repo.Create(data.Block, data.Txs, data.Events)
 			if err != nil {
 				slog.Error("forwardfill: failed to save block", "blockId", data.Block.Id, "err", err)
