@@ -163,6 +163,18 @@ func TestMatchesFilter(t *testing.T) {
 			payload:      PayloadFilter{From: "0xaaa", Topic: []string{"0xwrong"}},
 			wantMatch:    false,
 		},
+		{
+			name:         "topic0 filter with empty Topics — should not panic",
+			subscription: SubscriptionFilter{Topic0: "0xtopic"},
+			payload:      PayloadFilter{Topic: []string{}},
+			wantMatch:    false,
+		},
+		{
+			name:         "topic0 filter with nil Topics — should not panic",
+			subscription: SubscriptionFilter{Topic0: "0xtopic"},
+			payload:      PayloadFilter{},
+			wantMatch:    false,
+		},
 	}
 
 	for _, tc := range tests {

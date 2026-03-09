@@ -20,12 +20,11 @@ type SubscriptionFilter struct {
 type Entity struct {
    clientsChan map[SubscriptionFilter][]chan[]byte
    mu *sync.RWMutex
-   incoming chan []byte
+   incoming chan any
 }
 
-func newEntity() *Entity {
+func newEntity(c chan any) *Entity {
 	clientsChan := make(map[SubscriptionFilter][]chan[]byte)
-	c := make(chan []byte)
 	return &Entity{
 		clientsChan:clientsChan,
 		mu: &sync.RWMutex{},
@@ -36,15 +35,22 @@ func newEntity() *Entity {
 func (entity Entity) broadcast() {
    for {
 		data := <- entity.incoming
+		bytes, err := json.Marshal(data)
+		if err != nil {
+			// error handling
+		}
 		var payload = new(PayloadFilter)
 		
-		json.Unmarshal(data, &payload)
+		err = json.Unmarshal(bytes, &payload)
+		if err != nil {
+			// error handling
+		}
 		entity.mu.RLock()
 		for filter, clientsChan := range entity.clientsChan {
 			if matchesFilter(filter, *payload) {
 				for _, clientChan := range clientsChan {
 					select {
-					case clientChan <- data:
+					case clientChan <- bytes:
 					default:
 					}
 				}

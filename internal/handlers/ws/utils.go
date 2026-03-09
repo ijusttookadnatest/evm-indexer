@@ -33,7 +33,7 @@ func matchesFilter(subscription SubscriptionFilter, payload PayloadFilter) bool 
 		}
 	}
 	if subscription.Topic0 != "" {
-		if payload.Topic[0] != subscription.Topic0 {
+		if len(payload.Topic) > 0 && payload.Topic[0] != subscription.Topic0 {
 			return false
 		}
 	}

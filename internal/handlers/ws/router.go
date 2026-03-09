@@ -2,6 +2,7 @@ package ws
 
 import (
 	"fmt"
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -43,11 +44,11 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
    }
 }
 
-func NewRouter() http.Handler {
+func NewRouter(indexerStreams domain.IndexerStreams) http.Handler {
    entities := map[string]*Entity{
-       "blocks":       newEntity(),
-       "transactions": newEntity(),
-       "events":       newEntity(),
+       "blocks":       newEntity(indexerStreams.Block),
+       "transactions": newEntity(indexerStreams.Txs),
+       "events":       newEntity(indexerStreams.Events),
    }
    handler := NewHandler(entities)
 
