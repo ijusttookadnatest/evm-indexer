@@ -73,12 +73,11 @@ func TestSubscribe(t *testing.T) {
 		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
 		f := &Fetcher{client: client}
 		out := make(chan uint64, 1)
-		errCh := make(chan error, 1)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		subHeaders <- &types.Header{Number: big.NewInt(42)}
-		go f.Subscribe(ctx, out, errCh)
+		go func() { f.Subscribe(ctx, out) }()
 
 		select {
 		case got := <-out:
@@ -94,7 +93,7 @@ func TestSubscribe(t *testing.T) {
 		client := &mockEVMClient{subscribeErr: errors.New("connection refused")}
 		f := &Fetcher{client: client}
 		errCh := make(chan error, 1)
-		go f.Subscribe(context.Background(), make(chan uint64, 1), errCh)
+		go func() { errCh <- f.Subscribe(context.Background(), make(chan uint64, 1)) }()
 
 		select {
 		case err := <-errCh:
@@ -113,7 +112,7 @@ func TestSubscribe(t *testing.T) {
 		f := &Fetcher{client: client}
 		ctx, cancel := context.WithCancel(context.Background())
 		errCh := make(chan error, 1)
-		go f.Subscribe(ctx, make(chan uint64), errCh)
+		go func() { errCh <- f.Subscribe(ctx, make(chan uint64)) }()
 
 		cancel()
 

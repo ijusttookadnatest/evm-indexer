@@ -46,19 +46,19 @@ func (m *mockFFFetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	}
 	return domain.BlockTxsEvents{Block: domain.Block{Id: id}}, nil
 }
-func (m *mockFFFetcher) Subscribe(ctx context.Context, c chan<- uint64, e chan<- error) {
+func (m *mockFFFetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 	for _, id := range m.ids {
 		select {
 		case c <- id:
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		}
 	}
 	if m.subErr != nil {
-		e <- m.subErr
-		return
+		return m.subErr
 	}
 	<-ctx.Done()
+	return ctx.Err()
 }
 
 func TestForwardfill(t *testing.T) {

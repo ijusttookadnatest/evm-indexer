@@ -1,12 +1,12 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
-
 )
 
 func TestRun(t *testing.T) {
@@ -58,7 +58,7 @@ func TestRun(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewIndexerService(tt.repo, tt.fetcher, tt.indexerStreams)
-			err := svc.Run(tt.from, 1)
+			err := svc.Run(context.Background(), tt.from, 1)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

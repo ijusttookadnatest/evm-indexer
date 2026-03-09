@@ -54,7 +54,7 @@ func (m *mockBackfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	return domain.BlockTxsEvents{Block: domain.Block{Id: id}}, nil
 }
 
-func (m *mockBackfiller) Subscribe(_ context.Context, _ chan<- uint64, _ chan<- error) {}
+func (m *mockBackfiller) Subscribe(_ context.Context, _ chan<- uint64) error { return nil }
 
 func TestBackfill(t *testing.T) {
 	// slog.SetLogLoggerLevel(slog.LevelDebug)
