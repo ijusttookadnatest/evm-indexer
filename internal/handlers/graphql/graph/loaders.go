@@ -26,7 +26,7 @@ type transactionsReader struct {
 }
 
 func (r *transactionsReader) getBatchTransactions(ctx context.Context, blockIDs []uint64) []*dataloader.Result[[]*dto.Transaction] {
-	mTxs, err := r.service.GetTransactionsByBatchBlocksId(blockIDs, true)
+	mTxs, err := r.service.GetTransactionsByBatchBlocksId(ctx, blockIDs, true)
 	if err != nil {
 		return handleError[[]*dto.Transaction](len(blockIDs), err)
 	}
@@ -49,7 +49,7 @@ type eventsReader struct {
 }
 
 func (r *eventsReader) getBatchEvents(ctx context.Context, txHashs []string) []*dataloader.Result[[]*dto.Event] {
-	mEvents, err := r.service.GetEventsByBatchTxsHash(txHashs)
+	mEvents, err := r.service.GetEventsByBatchTxsHash(ctx, txHashs)
 	if err != nil {
 		return handleError[[]*dto.Event](len(txHashs), err)
 	}
@@ -91,8 +91,11 @@ func NewLoaders(service ports.QueryService) *Loaders {
 func Middleware(service ports.QueryService, next http.Handler) http.Handler {
 	// return a middleware that injects the loader to the request context
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
+        defer cancel()
+
 		loaders := NewLoaders(service)
-		r = r.WithContext(context.WithValue(r.Context(), loadersKey, loaders))
+		r = r.WithContext(context.WithValue(ctx, loadersKey, loaders))
 		next.ServeHTTP(w, r)
 	})
 }

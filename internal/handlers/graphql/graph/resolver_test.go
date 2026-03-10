@@ -22,31 +22,31 @@ type serviceMock struct {
 	err       error
 }
 
-func (m serviceMock) GetBlockByHash(_ string, _ bool) (*domain.BlockTxs, error) {
+func (m serviceMock) GetBlockByHash(_ context.Context, _ string, _ bool) (*domain.BlockTxs, error) {
 	return m.block, m.err
 }
-func (m serviceMock) GetBlockById(_ uint64, _ bool) (*domain.BlockTxs, error) {
+func (m serviceMock) GetBlockById(_ context.Context, _ uint64, _ bool) (*domain.BlockTxs, error) {
 	return m.block, m.err
 }
-func (m serviceMock) GetBlocksWithOffset(_, _ uint64, _ bool) ([]domain.BlockTxs, error) {
+func (m serviceMock) GetBlocksWithOffset(_ context.Context, _, _ uint64, _ bool) ([]domain.BlockTxs, error) {
 	return m.blocks, m.err
 }
-func (m serviceMock) GetBlocksByRangeTime(_, _ uint64, _ bool) ([]domain.BlockTxs, error) {
+func (m serviceMock) GetBlocksByRangeTime(_ context.Context, _, _ uint64, _ bool) ([]domain.BlockTxs, error) {
 	return m.blocks, m.err
 }
-func (m serviceMock) GetTransactionsByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
+func (m serviceMock) GetTransactionsByFilter(_ context.Context, _ domain.TransactionFilter) ([]domain.Transaction, error) {
 	return m.txs, m.err
 }
-func (m serviceMock) GetTransactionsByBatchBlocksId(_ []uint64, _ bool) (map[uint64][]domain.Transaction, error) {
+func (m serviceMock) GetTransactionsByBatchBlocksId(_ context.Context, _ []uint64, _ bool) (map[uint64][]domain.Transaction, error) {
 	return m.txsMap, m.err
 }
-func (m serviceMock) GetEventsByFilter(_ domain.EventFilter) ([]domain.Event, error) {
+func (m serviceMock) GetEventsByFilter(_ context.Context, _ domain.EventFilter) ([]domain.Event, error) {
 	return m.events, m.err
 }
-func (m serviceMock) GetEventByTxHashLogIndex(_ string, _ int) (*domain.Event, error) {
+func (m serviceMock) GetEventByTxHashLogIndex(_ context.Context, _ string, _ int) (*domain.Event, error) {
 	return m.event, m.err
 }
-func (m serviceMock) GetEventsByBatchTxsHash(_ []string) (map[string][]domain.Event, error) {
+func (m serviceMock) GetEventsByBatchTxsHash(_ context.Context, _ []string) (map[string][]domain.Event, error) {
 	return m.eventsMap, m.err
 }
 

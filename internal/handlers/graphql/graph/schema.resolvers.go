@@ -34,11 +34,11 @@ func (r *queryResolver) Blocks(ctx context.Context, filter *dto.BlockFilter) ([]
 	var err error
 
 	if hasId {
-		block, err = r.Service.GetBlockById(*filter.ID, false)
+		block, err = r.Service.GetBlockById(ctx, *filter.ID, false)
 	} else if hasRangeTime {
-		blocks, err = r.Service.GetBlocksByRangeTime(*filter.FromTime, *filter.ToTime, false)
+		blocks, err = r.Service.GetBlocksByRangeTime(ctx, *filter.FromTime, *filter.ToTime, false)
 	} else {
-		blocks, err = r.Service.GetBlocksWithOffset(*filter.FromID, *filter.Offset, false)
+		blocks, err = r.Service.GetBlocksWithOffset(ctx, *filter.FromID, *filter.Offset, false)
 	}
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (r *queryResolver) Transactions(ctx context.Context, filter *dto.Transactio
 		To:   filter.To,
 	}
 
-	txs, err := r.Service.GetTransactionsByFilter(txFilter)
+	txs, err := r.Service.GetTransactionsByFilter(ctx, txFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *queryResolver) Events(ctx context.Context, filter *dto.EventFilter) ([]
 		Topics:  topics,
 	}
 
-	events, err := r.Service.GetEventsByFilter(eventFilter)
+	events, err := r.Service.GetEventsByFilter(ctx, eventFilter)
 	if err != nil {
 		return nil, err
 	}
