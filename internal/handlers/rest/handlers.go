@@ -1,11 +1,14 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
 )
 
 type Handler struct {
@@ -22,19 +25,21 @@ func (handler *Handler) GetBlock(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid query parameters", http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
 	var blocks []domain.BlockTxs
 	var block *domain.BlockTxs
 
 	switch blockDTO.groupParam {
 	case IdParam:
-		block, err = handler.service.GetBlockById(blockDTO.id, blockDTO.tx)
+		block, err = handler.service.GetBlockById(ctx, blockDTO.id, blockDTO.tx)
 	case HashParam:
-		block, err = handler.service.GetBlockByHash(blockDTO.hash, blockDTO.tx)
+		block, err = handler.service.GetBlockByHash(ctx, blockDTO.hash, blockDTO.tx)
 	case FromOffsetParam:
-		blocks, err = handler.service.GetBlocksWithOffset(blockDTO.from, blockDTO.offset, blockDTO.tx)
+		blocks, err = handler.service.GetBlocksWithOffset(ctx, blockDTO.from, blockDTO.offset, blockDTO.tx)
 	case FromToTimeParam:
-		blocks, err = handler.service.GetBlocksByRangeTime(blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
+		blocks, err = handler.service.GetBlocksByRangeTime(ctx, blockDTO.fromTime, blockDTO.toTime, blockDTO.tx)
 	}
 
 	if err != nil {
@@ -56,8 +61,10 @@ func (handler *Handler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid query parameters", http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	events, err := handler.service.GetEventsByFilter(filter)
+	events, err := handler.service.GetEventsByFilter(ctx, filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return
@@ -83,8 +90,10 @@ func (handler *Handler) GetEventByTxLog(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "invalid query parameters", http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	event, err := handler.service.GetEventByTxHashLogIndex(txHash, logIndex)
+	event, err := handler.service.GetEventByTxHashLogIndex(ctx, txHash, logIndex)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return
@@ -100,8 +109,10 @@ func (handler *Handler) GetTransaction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid query parameters", http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	txs, err := handler.service.GetTransactionsByFilter(filter)
+	txs, err := handler.service.GetTransactionsByFilter(ctx, filter)
 	if err != nil {
 		writeResErrorToHTTP(err, w)
 		return

@@ -1,12 +1,14 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 )
 
 type serviceMock struct {
@@ -29,39 +31,39 @@ func newServiceMock(block *domain.BlockTxs, blocksTxs []domain.BlockTxs, events 
 	}
 }
 
-func (service serviceMock) GetBlockByHash(hash string, tx bool) (*domain.BlockTxs, error) {
+func (service serviceMock) GetBlockByHash(_ context.Context, hash string, tx bool) (*domain.BlockTxs, error) {
 	return service.block, service.err
 }
 
-func (service serviceMock) GetBlockById(id uint64, tx bool) (*domain.BlockTxs, error) {
+func (service serviceMock) GetBlockById(_ context.Context, id uint64, tx bool) (*domain.BlockTxs, error) {
 	return service.block, service.err
 }
 
-func (service serviceMock) GetBlocksWithOffset(fromId, offset uint64, tx bool) ([]domain.BlockTxs, error) {
+func (service serviceMock) GetBlocksWithOffset(_ context.Context, fromId, offset uint64, tx bool) ([]domain.BlockTxs, error) {
 	return service.blocksTxs, service.err
 }
 
-func (service serviceMock) GetBlocksByRangeTime(from, to uint64, tx bool) ([]domain.BlockTxs, error) {
+func (service serviceMock) GetBlocksByRangeTime(_ context.Context, from, to uint64, tx bool) ([]domain.BlockTxs, error) {
 	return service.blocksTxs, service.err
 }
 
-func (service serviceMock) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {
+func (service serviceMock) GetTransactionsByFilter(_ context.Context, filter domain.TransactionFilter) ([]domain.Transaction, error) {
 	return service.txs, service.err
 }
 
-func (service serviceMock) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error) {
+func (service serviceMock) GetEventsByFilter(_ context.Context, filter domain.EventFilter) ([]domain.Event, error) {
 	return service.events, service.err
 }
 
-func (service serviceMock) GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event, error) {
+func (service serviceMock) GetEventByTxHashLogIndex(_ context.Context, hash string, logIndex int) (*domain.Event, error) {
 	return service.event, service.err
 }
 
-func (service serviceMock) GetTransactionsByBatchBlocksId(blockIDs []uint64, tx bool) (map[uint64][]domain.Transaction, error) {
+func (service serviceMock) GetTransactionsByBatchBlocksId(_ context.Context, blockIDs []uint64, tx bool) (map[uint64][]domain.Transaction, error) {
 	return nil, service.err
 }
 
-func (service serviceMock) GetEventsByBatchTxsHash(txsHash []string) (map[string][]domain.Event, error) {
+func (service serviceMock) GetEventsByBatchTxsHash(_ context.Context, txsHash []string) (map[string][]domain.Event, error) {
 	return nil, service.err
 }
 

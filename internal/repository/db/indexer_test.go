@@ -3,6 +3,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"testing"
@@ -33,7 +34,7 @@ func TestCreate_Integration(t *testing.T) {
 		}
 
 		// Verify block was persisted
-		got, err := queryRepo.GetBlockById(200)
+		got, err := queryRepo.GetBlockById(context.Background(), 200)
 		if err != nil {
 			t.Fatalf("block should exist: %v", err)
 		}
@@ -47,8 +48,7 @@ func TestCreate_Integration(t *testing.T) {
 		seedFixtures(t)
 
 		block := domain.Block{
-			Hash: "0xdupe", Id: 100, ParentHash: "0xparent",
-			GasLimit: 30000000, GasUsed: 10000000, Miner: "0xminer", Timestamp: 1800000000,
+			Hash: "0xblock100", Id: 100,
 		}
 		err := indexerRepo.Create(block, nil, nil)
 		if err != nil {
@@ -101,7 +101,7 @@ func TestDelete_Integration(t *testing.T) {
 		}
 
 		// Verify block is gone
-		_, err = queryRepo.GetBlockById(100)
+		_, err = queryRepo.GetBlockById(context.Background(), 100)
 		if err == nil {
 			t.Fatal("block should be deleted")
 		}

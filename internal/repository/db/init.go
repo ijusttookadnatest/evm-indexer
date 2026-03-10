@@ -49,7 +49,7 @@ func RunDownMigrations(db *sql.DB) error {
 	if err := goose.SetDialect("postgres"); err != nil {
         return err
     }
-    if err := goose.Up(db, "migrations"); err != nil {
+    if err := goose.Down(db, "migrations"); err != nil {
         return err
     }
 	return nil

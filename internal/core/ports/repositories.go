@@ -1,19 +1,23 @@
 package ports
 
-import "github/ijusttookadnatest/indexer-evm/internal/core/domain"
+import (
+	"context"
+
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+)
 
 type QueryRepository interface {
-	GetBlockByHash(hash string) (*domain.Block, error)
-	GetBlockById(id uint64) (*domain.Block, error)
-	GetBlocksByRangeId(from, to uint64) ([]domain.Block, error)
-	GetBlocksByRangeTime(from, to uint64) ([]domain.Block, error)
+	GetBlockByHash(ctx context.Context, hash string) (*domain.Block, error)
+	GetBlockById(ctx context.Context, id uint64) (*domain.Block, error)
+	GetBlocksByRangeId(ctx context.Context, from, to uint64) ([]domain.Block, error)
+	GetBlocksByRangeTime(ctx context.Context, from, to uint64) ([]domain.Block, error)
 
-	GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error)
-	GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction, error)
+	GetTransactionsByFilter(ctx context.Context, filter domain.TransactionFilter) ([]domain.Transaction, error)
+	GetTransactionsByBatchBlocksId(ctx context.Context, blocksId []uint64) ([]domain.Transaction, error)
 
-	GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error)
-	GetEventByTxHashLogIndex(hash string, logIndex int) (*domain.Event, error)
-	GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event, error)
+	GetEventsByFilter(ctx context.Context, filter domain.EventFilter) ([]domain.Event, error)
+	GetEventByTxHashLogIndex(ctx context.Context, hash string, logIndex int) (*domain.Event, error)
+	GetEventsByBatchTxsHash(ctx context.Context, txsHash []string) ([]domain.Event, error)
 }
 
 type IndexerRepository interface {

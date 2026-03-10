@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -19,42 +20,42 @@ type mockRepo struct {
 	txErr    error
 }
 
-func (m *mockRepo) GetBlockByHash(_ string) (*domain.Block, error) {
+func (m *mockRepo) GetBlockByHash(_ context.Context, _ string) (*domain.Block, error) {
 	return m.blockResult, m.blockErr
 }
 
-func (m *mockRepo) GetBlockById(_ uint64) (*domain.Block, error) {
+func (m *mockRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Block, error) {
 	return m.blockResult, m.blockErr
 }
 
-func (m *mockRepo) GetBlocksByRangeId(_, _ uint64) ([]domain.Block, error) {
+func (m *mockRepo) GetBlocksByRangeId(_ context.Context, _, _ uint64) ([]domain.Block, error) {
 	return m.blocksResult, m.blockErr
 }
 
-func (m *mockRepo) GetBlocksByRangeTime(_, _ uint64) ([]domain.Block, error) {
+func (m *mockRepo) GetBlocksByRangeTime(_ context.Context, _, _ uint64) ([]domain.Block, error) {
 	return m.blocksResult, m.blockErr
 }
 
-func (m *mockRepo) GetTransactionsByFilter(_ domain.TransactionFilter) ([]domain.Transaction, error) {
+func (m *mockRepo) GetTransactionsByFilter(_ context.Context, _ domain.TransactionFilter) ([]domain.Transaction, error) {
 	return m.txsResult, m.txErr
 }
 
-func (m *mockRepo) GetTransactionsByBatchBlocksId(_ []uint64) ([]domain.Transaction, error) {
+func (m *mockRepo) GetTransactionsByBatchBlocksId(_ context.Context, _ []uint64) ([]domain.Transaction, error) {
 	return m.txsResult, m.txErr
 }
 
-func (m *mockRepo) GetEventsByFilter(_ domain.EventFilter) ([]domain.Event, error) {
+func (m *mockRepo) GetEventsByFilter(_ context.Context, _ domain.EventFilter) ([]domain.Event, error) {
 	return m.eventsResult, m.eventErr
 }
 
-func (m *mockRepo) GetEventByTxHashLogIndex(_ string, _ int) (*domain.Event, error) {
+func (m *mockRepo) GetEventByTxHashLogIndex(_ context.Context, _ string, _ int) (*domain.Event, error) {
 	if len(m.eventsResult) == 0 {
 		return nil, m.eventErr
 	}
 	return &m.eventsResult[0], m.eventErr
 }
 
-func (m *mockRepo) GetEventsByBatchTxsHash(_ []string) ([]domain.Event, error) {
+func (m *mockRepo) GetEventsByBatchTxsHash(_ context.Context, _ []string) ([]domain.Event, error) {
 	return m.eventsResult, m.eventErr
 }
 
@@ -151,7 +152,7 @@ func TestGetBlockById(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetBlockById(tc.id, tc.withTxs)
+			got, err := svc.GetBlockById(context.Background(), tc.id, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -260,7 +261,7 @@ func TestGetBlocksWithOffset(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetBlocksWithOffset(tc.from, tc.offset, tc.withTxs)
+			got, err := svc.GetBlocksWithOffset(context.Background(), tc.from, tc.offset, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -374,7 +375,7 @@ func TestGetBlocksByRangeTime(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetBlocksByRangeTime(tc.from, tc.to, tc.withTxs)
+			got, err := svc.GetBlocksByRangeTime(context.Background(), tc.from, tc.to, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -481,7 +482,7 @@ func TestGetBlockByHash(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetBlockByHash(tc.hash, tc.withTxs)
+			got, err := svc.GetBlockByHash(context.Background(), tc.hash, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -603,7 +604,7 @@ func TestGetEventsByFilter(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetEventsByFilter(tc.filter)
+			got, err := svc.GetEventsByFilter(context.Background(), tc.filter)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -734,7 +735,7 @@ func TestGetTransactionsByFilter(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetTransactionsByFilter(tc.filter)
+			got, err := svc.GetTransactionsByFilter(context.Background(), tc.filter)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -797,7 +798,7 @@ func TestGetEventByTxHashLogIndex(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetEventByTxHashLogIndex(tc.hash, tc.logIndex)
+			got, err := svc.GetEventByTxHashLogIndex(context.Background(), tc.hash, tc.logIndex)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -862,7 +863,7 @@ func TestGetTransactionsByBatchBlocksId(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetTransactionsByBatchBlocksId(tc.blockIDs, tc.withTxs)
+			got, err := svc.GetTransactionsByBatchBlocksId(context.Background(), tc.blockIDs, tc.withTxs)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)
@@ -930,7 +931,7 @@ func TestGetEventsByBatchTxsHash(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := newService(tc.repo)
-			got, err := svc.GetEventsByBatchTxsHash(tc.hashes)
+			got, err := svc.GetEventsByBatchTxsHash(context.Background(), tc.hashes)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("error: got %v, want %v", err, tc.wantErr)

@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
+
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 
 	"github.com/lib/pq"
@@ -15,8 +17,8 @@ func NewQueryRepository(db *sql.DB) *QueryRepository {
 	return &QueryRepository{db: db}
 }
 
-func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id = $1;`, id)
+func (repo *QueryRepository) GetBlockById(ctx context.Context, id uint64) (*domain.Block, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id = $1;`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +30,8 @@ func (repo *QueryRepository) GetBlockById(id uint64) (*domain.Block, error) {
 	return &blocks[0], nil
 }
 
-func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_hash = $1;`, hash)
+func (repo *QueryRepository) GetBlockByHash(ctx context.Context, hash string) (*domain.Block, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_hash = $1;`, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +43,8 @@ func (repo *QueryRepository) GetBlockByHash(hash string) (*domain.Block, error) 
 	return &blocks[0], nil
 }
 
-func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id > $1 AND block_id < $2;`, from, to)
+func (repo *QueryRepository) GetBlocksByRangeId(ctx context.Context, from, to uint64) ([]domain.Block, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id > $1 AND block_id < $2;`, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +52,8 @@ func (repo *QueryRepository) GetBlocksByRangeId(from, to uint64) ([]domain.Block
 	return fetchBlocks(rows)
 }
 
-func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Block, error) {
-	rows, err := repo.db.Query(`SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_timestamp > $1 AND block_timestamp < $2;`, from, to)
+func (repo *QueryRepository) GetBlocksByRangeTime(ctx context.Context, from, to uint64) ([]domain.Block, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_timestamp > $1 AND block_timestamp < $2;`, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +61,8 @@ func (repo *QueryRepository) GetBlocksByRangeTime(from, to uint64) ([]domain.Blo
 	return fetchBlocks(rows)
 }
 
-func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]domain.Event, error) {
-	rows, err := repo.db.Query(`
+func (repo *QueryRepository) GetEventsByFilter(ctx context.Context, filter domain.EventFilter) ([]domain.Event, error) {
+	rows, err := repo.db.QueryContext(ctx, `
 		SELECT *
 		FROM events
 		WHERE
@@ -78,8 +80,8 @@ func (repo *QueryRepository) GetEventsByFilter(filter domain.EventFilter) ([]dom
 	return fetchEvents(rows)
 }
 
-func (repo *QueryRepository) GetEventByTxHashLogIndex(txHash string, logIndex int) (*domain.Event, error) {
-	rows, err := repo.db.Query(`SELECT * FROM events  WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
+func (repo *QueryRepository) GetEventByTxHashLogIndex(ctx context.Context, txHash string, logIndex int) (*domain.Event, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT * FROM events  WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +93,8 @@ func (repo *QueryRepository) GetEventByTxHashLogIndex(txHash string, logIndex in
 	return &events[0], nil
 }
 
-func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFilter) ([]domain.Transaction, error) {
-	rows, err := repo.db.Query(`
+func (repo *QueryRepository) GetTransactionsByFilter(ctx context.Context, filter domain.TransactionFilter) ([]domain.Transaction, error) {
+	rows, err := repo.db.QueryContext(ctx, `
 		SELECT *
 		FROM transactions
 		WHERE
@@ -111,8 +113,8 @@ func (repo *QueryRepository) GetTransactionsByFilter(filter domain.TransactionFi
 	return fetchTxs(rows)
 }
 
-func (repo *QueryRepository) GetTransactionsByBatchBlocksId(blocksId []uint64) ([]domain.Transaction, error) {
-	rows, err := repo.db.Query(`SELECT * FROM transactions WHERE block_id = ANY($1);`, pq.Array(blocksId))
+func (repo *QueryRepository) GetTransactionsByBatchBlocksId(ctx context.Context, blocksId []uint64) ([]domain.Transaction, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT * FROM transactions WHERE block_id = ANY($1);`, pq.Array(blocksId))
 	if err != nil {
 		return nil, err
 	}
@@ -120,8 +122,8 @@ func (repo *QueryRepository) GetTransactionsByBatchBlocksId(blocksId []uint64) (
 	return fetchTxs(rows)
 }
 
-func (repo *QueryRepository) GetEventsByBatchTxsHash(txsHash []string) ([]domain.Event, error) {
-	rows, err := repo.db.Query(`SELECT * FROM events WHERE tx_hash = ANY($1);`, pq.Array(txsHash))
+func (repo *QueryRepository) GetEventsByBatchTxsHash(ctx context.Context, txsHash []string) ([]domain.Event, error) {
+	rows, err := repo.db.QueryContext(ctx, `SELECT * FROM events WHERE tx_hash = ANY($1);`, pq.Array(txsHash))
 	if err != nil {
 		return nil, err
 	}

@@ -3,9 +3,11 @@
 package repository
 
 import (
+	"context"
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 	"testing"
+
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 )
 
 // --- Block queries ---
@@ -17,7 +19,7 @@ func TestGetBlockById_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid block", func(t *testing.T) {
-		block, err := repo.GetBlockById(100)
+		block, err := repo.GetBlockById(context.Background(), 100)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -30,7 +32,7 @@ func TestGetBlockById_Integration(t *testing.T) {
 	})
 
 	t.Run("no block", func(t *testing.T) {
-		_, err := repo.GetBlockById(999)
+		_, err := repo.GetBlockById(context.Background(), 999)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -47,7 +49,7 @@ func TestGetBlockByHash_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid block", func(t *testing.T) {
-		block, err := repo.GetBlockByHash("0xblock100")
+		block, err := repo.GetBlockByHash(context.Background(), "0xblock100")
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -60,7 +62,7 @@ func TestGetBlockByHash_Integration(t *testing.T) {
 	})
 
 	t.Run("no block", func(t *testing.T) {
-		_, err := repo.GetBlockByHash("0xnonexistent")
+		_, err := repo.GetBlockByHash(context.Background(), "0xnonexistent")
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -77,7 +79,7 @@ func TestGetBlocksByRangeId_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid range with results", func(t *testing.T) {
-		blocks, err := repo.GetBlocksByRangeId(99, 103)
+		blocks, err := repo.GetBlocksByRangeId(context.Background(), 99, 103)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -90,7 +92,7 @@ func TestGetBlocksByRangeId_Integration(t *testing.T) {
 	})
 
 	t.Run("range with one result", func(t *testing.T) {
-		blocks, err := repo.GetBlocksByRangeId(99, 101)
+		blocks, err := repo.GetBlocksByRangeId(context.Background(), 99, 101)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -103,7 +105,7 @@ func TestGetBlocksByRangeId_Integration(t *testing.T) {
 	})
 
 	t.Run("empty range", func(t *testing.T) {
-		_, err := repo.GetBlocksByRangeId(500, 600)
+		_, err := repo.GetBlocksByRangeId(context.Background(), 500, 600)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -120,7 +122,7 @@ func TestGetBlocksByRangeTime_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid time range", func(t *testing.T) {
-		blocks, err := repo.GetBlocksByRangeTime(1699999999, 1700000025)
+		blocks, err := repo.GetBlocksByRangeTime(context.Background(), 1699999999, 1700000025)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -130,7 +132,7 @@ func TestGetBlocksByRangeTime_Integration(t *testing.T) {
 	})
 
 	t.Run("partial time range", func(t *testing.T) {
-		blocks, err := repo.GetBlocksByRangeTime(1700000010, 1700000020)
+		blocks, err := repo.GetBlocksByRangeTime(context.Background(), 1700000010, 1700000020)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -143,7 +145,7 @@ func TestGetBlocksByRangeTime_Integration(t *testing.T) {
 	})
 
 	t.Run("empty time range", func(t *testing.T) {
-		_, err := repo.GetBlocksByRangeTime(9000000000, 9000000001)
+		_, err := repo.GetBlocksByRangeTime(context.Background(), 9000000000, 9000000001)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -163,7 +165,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 
 	t.Run("all nil filters returns all", func(t *testing.T) {
 		filter := domain.TransactionFilter{}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -175,7 +177,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 	t.Run("filter by hash", func(t *testing.T) {
 		hash := "0xtx1"
 		filter := domain.TransactionFilter{Hash: &hash}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -190,7 +192,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 	t.Run("filter by from", func(t *testing.T) {
 		from := "0xAlice"
 		filter := domain.TransactionFilter{From: &from}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -202,7 +204,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 	t.Run("filter by to", func(t *testing.T) {
 		to := "0xBob"
 		filter := domain.TransactionFilter{To: &to}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -218,7 +220,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 		from := "0xAlice"
 		to := "0xContract"
 		filter := domain.TransactionFilter{From: &from, To: &to}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -233,7 +235,7 @@ func TestGetTransactionsByFilter_Integration(t *testing.T) {
 	t.Run("no match", func(t *testing.T) {
 		from := "0xNobody"
 		filter := domain.TransactionFilter{From: &from}
-		txs, err := repo.GetTransactionsByFilter(filter)
+		txs, err := repo.GetTransactionsByFilter(context.Background(), filter)
 		if len(txs) != 0 {
 			t.Errorf("should return empty slice, has %v", len(txs))
 		}
@@ -252,7 +254,7 @@ func TestGetEventsByTxHashLogIndex_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("valid event", func(t *testing.T) {
-		event, err := repo.GetEventByTxHashLogIndex("0xtx2", 0)
+		event, err := repo.GetEventByTxHashLogIndex(context.Background(), "0xtx2", 0)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -262,7 +264,7 @@ func TestGetEventsByTxHashLogIndex_Integration(t *testing.T) {
 	})
 
 	t.Run("multiple events same tx", func(t *testing.T) {
-		event, err := repo.GetEventByTxHashLogIndex("0xtx2", 1)
+		event, err := repo.GetEventByTxHashLogIndex(context.Background(), "0xtx2", 1)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -272,7 +274,7 @@ func TestGetEventsByTxHashLogIndex_Integration(t *testing.T) {
 	})
 
 	t.Run("no event", func(t *testing.T) {
-		_, err := repo.GetEventByTxHashLogIndex("0xnonexistent", 0)
+		_, err := repo.GetEventByTxHashLogIndex(context.Background(), "0xnonexistent", 0)
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -289,7 +291,7 @@ func TestGetTransactionsByBatchBlocksId_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("blocks with transactions", func(t *testing.T) {
-		txs, err := repo.GetTransactionsByBatchBlocksId([]uint64{100, 101})
+		txs, err := repo.GetTransactionsByBatchBlocksId(context.Background(), []uint64{100, 101})
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -299,7 +301,7 @@ func TestGetTransactionsByBatchBlocksId_Integration(t *testing.T) {
 	})
 
 	t.Run("block with no transactions", func(t *testing.T) {
-		_, err := repo.GetTransactionsByBatchBlocksId([]uint64{102})
+		_, err := repo.GetTransactionsByBatchBlocksId(context.Background(), []uint64{102})
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -316,7 +318,7 @@ func TestGetEventsByBatchTxsHash_Integration(t *testing.T) {
 	repo := NewQueryRepository(testDB)
 
 	t.Run("tx with events", func(t *testing.T) {
-		events, err := repo.GetEventsByBatchTxsHash([]string{"0xtx2"})
+		events, err := repo.GetEventsByBatchTxsHash(context.Background(), []string{"0xtx2"})
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -326,7 +328,7 @@ func TestGetEventsByBatchTxsHash_Integration(t *testing.T) {
 	})
 
 	t.Run("tx with no events", func(t *testing.T) {
-		_, err := repo.GetEventsByBatchTxsHash([]string{"0xtx1"})
+		_, err := repo.GetEventsByBatchTxsHash(context.Background(), []string{"0xtx1"})
 		if err == nil {
 			t.Fatal("should return an error")
 		}
@@ -345,7 +347,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 	t.Run("filter by tx_hash", func(t *testing.T) {
 		txHash := "0xtx2"
 		filter := domain.EventFilter{TxHash: &txHash}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -357,7 +359,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 	t.Run("filter by emitter", func(t *testing.T) {
 		emitter := "0xContract"
 		filter := domain.EventFilter{Emitter: &emitter}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -369,7 +371,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 	t.Run("filter by topics", func(t *testing.T) {
 		topics := []string{"0xTransferSig"}
 		filter := domain.EventFilter{Topics: topics}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -385,7 +387,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 		emitter := "0xContract"
 		topics := []string{"0xApprovalSig"}
 		filter := domain.EventFilter{Emitter: &emitter, Topics: topics}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -400,7 +402,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 	t.Run("no match", func(t *testing.T) {
 		emitter := "0xNobody"
 		filter := domain.EventFilter{Emitter: &emitter}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if len(events) != 0 {
 			t.Errorf("should return empty slice, has %v", len(events))
 		}
@@ -411,7 +413,7 @@ func TestGetEventsByFilter_Integration(t *testing.T) {
 
 	t.Run("all nil filters", func(t *testing.T) {
 		filter := domain.EventFilter{}
-		events, err := repo.GetEventsByFilter(filter)
+		events, err := repo.GetEventsByFilter(context.Background(), filter)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
