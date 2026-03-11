@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -24,6 +25,7 @@ type Client struct {
    outgoing     chan []byte
    entities 	map[string]*Entity
    pos	    	[]Position
+   once         sync.Once
 }
 
 func newClient(conn *websocket.Conn, entities map[string]*Entity) *Client {
@@ -65,20 +67,26 @@ func (client *Client) subscribe(message []byte) error {
 }
 
 func (client *Client) delete() {
-   client.conn.Close()
-   for _, pos := range client.pos {
-		entity := client.entities[pos.topic]
-
-		entity.mu.Lock()
-		c := entity.clientsChan[pos.filter]
-		entity.clientsChan[pos.filter] = append(c[:pos.index], c[pos.index+1:]...) 
-		entity.mu.Unlock()
-   }
+	client.once.Do(func() {
+		for _, pos := range client.pos {
+			entity := client.entities[pos.topic]
+			
+			entity.mu.Lock()
+			c := entity.clientsChan[pos.filter]
+			entity.clientsChan[pos.filter] = append(c[:pos.index], c[pos.index+1:]...) 
+			entity.mu.Unlock()
+		}
+		client.conn.Close()
+		close(client.outgoing)
+	})
 }
 
-func (client Client) messageWriter() {
+func (client *Client) messageWriter() {
 	for {
-		message := <- client.outgoing
+		message, ok := <- client.outgoing
+		if !ok {
+			return
+		}
 		err := client.conn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			client.delete()

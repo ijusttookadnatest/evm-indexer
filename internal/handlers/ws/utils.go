@@ -1,13 +1,26 @@
 package ws
 
-import "fmt"
+import (
+	"encoding/json"
+
+	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+)
+
+type WSMessage struct {
+	Type    string `json:"type"`
+	Payload any    `json:"payload"`
+}
+
+func marshalWSMessage(msgType string, payload any) ([]byte, error) {
+	return json.Marshal(WSMessage{Type: msgType, Payload: payload})
+}
 
 func validateSubscription(sub SubscribeMessage) error {
 	if sub.Type != "subscribe" {
-		return fmt.Errorf("invalid subscription")
+		return domain.ErrInvalidSubscription
 	}
 	if sub.Topic != "events" && sub.Topic != "transactions" && sub.Topic != "blocks" {
-		return fmt.Errorf("invalid subscription")
+		return domain.ErrInvalidSubscription
 	}
 	return nil
 }
@@ -33,7 +46,7 @@ func matchesFilter(subscription SubscriptionFilter, payload PayloadFilter) bool 
 		}
 	}
 	if subscription.Topic0 != "" {
-		if len(payload.Topic) > 0 && payload.Topic[0] != subscription.Topic0 {
+		if len(payload.Topic) == 0 || payload.Topic[0] != subscription.Topic0 {
 			return false
 		}
 	}

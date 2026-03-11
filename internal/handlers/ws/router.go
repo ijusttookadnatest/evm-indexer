@@ -1,8 +1,8 @@
 package ws
 
 import (
-	"fmt"
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -25,7 +25,7 @@ var upgrader = websocket.Upgrader{
 func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Request) {
    conn, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
-      fmt.Println("Error upgrading:", err)
+      slog.Error("Error upgrading:", "reason", err)
       return
    }
    defer conn.Close()
@@ -39,15 +39,22 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
          client.delete()
          break
       }
-      client.subscribe(message)
+      if err = client.subscribe(message); err != nil {
+         b, _ := marshalWSMessage("error", map[string]string{"message": err.Error()})
+         if err = client.conn.WriteMessage(websocket.TextMessage, b); err != nil {
+            slog.Error("ws: failed to write error response", "err", err)
+            client.delete()
+            break
+         }
+      }
    }
 }
 
 func NewRouter(indexerStreams domain.IndexerStreams) http.Handler {
    entities := map[string]*Entity{
-       "blocks":       newEntity(indexerStreams.Block),
-       "transactions": newEntity(indexerStreams.Txs),
-       "events":       newEntity(indexerStreams.Events),
+       "blocks":       newEntity("block", indexerStreams.Block),
+       "transactions": newEntity("transaction", indexerStreams.Txs),
+       "events":       newEntity("event", indexerStreams.Events),
    }
    handler := NewHandler(entities)
 

@@ -1,12 +1,67 @@
 package ws
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
 	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
 )
+
+// ── TestBroadcastMarshalError ──────────────────────────────────────────────────
+//
+// BUG (unhandled): when json.Marshal fails, execution continues with nil bytes.
+// A subscriber with an empty filter will receive nil — this test documents that.
+// Correct behavior: skip the iteration and log/return the error.
+func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
+	incoming := make(chan any, 1)
+	entity := newEntity("block", incoming)
+
+	clientChan := make(chan []byte, 1)
+	entity.mu.Lock()
+	entity.clientsChan[SubscriptionFilter{}] = []chan []byte{clientChan}
+	entity.mu.Unlock()
+
+	go entity.broadcast()
+
+	incoming <- make(chan int) // json.Marshal fails on channel types
+
+	select {
+	case got := <-clientChan:
+		t.Errorf("BUG: received %v bytes despite marshal error — should have received nothing", got)
+	case <-time.After(100 * time.Millisecond):
+		// correct: nothing broadcast
+	}
+}
+
+// ── TestBroadcastSlowClientDropsMessage ───────────────────────────────────────
+//
+// HANDLED: broadcast uses select/default so a slow/blocked client does not
+// block the fan-out loop. The message is simply dropped for that client.
+func TestBroadcastSlowClientDropsMessage(t *testing.T) {
+	incoming := make(chan any, 1)
+	entity := newEntity("block", incoming)
+
+	// Simulate a slow client: buffered channel that is already full.
+	// broadcast's select/default will drop the new message instead of blocking.
+	slowChan := make(chan []byte, 1)
+	slowChan <- []byte("already full")
+	entity.mu.Lock()
+	entity.clientsChan[SubscriptionFilter{}] = []chan []byte{slowChan}
+	entity.mu.Unlock()
+
+	go entity.broadcast()
+
+	incoming <- domain.Block{Id: 1, Hash: "0xabc"}
+	time.Sleep(100 * time.Millisecond)
+
+	// Drain: should only contain the original "already full" sentinel, not the broadcast.
+	if len(slowChan) != 1 {
+		t.Errorf("expected 1 message in channel (sentinel), got %d — broadcast was not dropped", len(slowChan))
+	}
+	if msg := <-slowChan; string(msg) != "already full" {
+		t.Errorf("expected sentinel message, got: %s", msg)
+	}
+}
 
 func TestBroadcast(t *testing.T) {
 	tests := []struct {
@@ -56,7 +111,7 @@ func TestBroadcast(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			incoming := make(chan any, 1)
-			entity := newEntity(incoming)
+			entity := newEntity("block", incoming)
 
 			clientChan := make(chan []byte, 1)
 			entity.mu.Lock()
@@ -73,7 +128,7 @@ func TestBroadcast(t *testing.T) {
 					t.Errorf("did not expect to receive, got: %s", got)
 					return
 				}
-				expected, _ := json.Marshal(tc.payload)
+				expected, _ := marshalWSMessage("block", tc.payload)
 				if string(got) != string(expected) {
 					t.Errorf("payload mismatch:\n got  %s\n want %s", got, expected)
 				}

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,9 +15,9 @@ import (
 
 func testEntities() map[string]*Entity {
 	return map[string]*Entity{
-		"blocks":       newEntity(make(chan any)),
-		"transactions": newEntity(make(chan any)),
-		"events":       newEntity(make(chan any)),
+		"blocks":       newEntity("blocks", make(chan any)),
+		"transactions": newEntity("transactions", make(chan any)),
+		"events":       newEntity("events", make(chan any)),
 	}
 }
 
@@ -132,6 +133,63 @@ func TestSubscribe(t *testing.T) {
 			}
 		})
 	}
+}
+
+// ── TestMessageWriterCleansUpOnWriteError ─────────────────────────────────────
+//
+// HANDLED: messageWriter calls delete() when a write fails.
+// This test verifies the client is removed from the entity on write error.
+func TestMessageWriterCleansUpOnWriteError(t *testing.T) {
+	conn, cleanup := newTestWSConn(t)
+	defer cleanup()
+
+	entities := testEntities()
+	client := newClient(conn, entities)
+
+	if err := client.subscribe(subMsg("subscribe", "blocks", "", "")); err != nil {
+		t.Fatalf("subscribe: %v", err)
+	}
+
+	filter := SubscriptionFilter{}
+	entities["blocks"].mu.RLock()
+	before := len(entities["blocks"].clientsChan[filter])
+	entities["blocks"].mu.RUnlock()
+	if before != 1 {
+		t.Fatalf("expected 1 client before write error, got %d", before)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		client.messageWriter()
+		close(done)
+	}()
+
+	conn.Close()                          // force write failure
+	client.outgoing <- []byte("trigger") // unblock messageWriter so it attempts the write
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("messageWriter did not exit after write error")
+	}
+
+	entities["blocks"].mu.RLock()
+	after := len(entities["blocks"].clientsChan[filter])
+	entities["blocks"].mu.RUnlock()
+	if after != 0 {
+		t.Errorf("expected 0 clients after write error, got %d", after)
+	}
+}
+
+// ── TestDeleteCalledTwicePanics ────────────────────────────────────────────────
+//
+// BUG (unhandled): delete() can be called concurrently by both the reader loop
+// and messageWriter (each reacts to its own error). The second call panics because
+// it uses a stale pos.index on a slice that was already shrunk.
+// TODO(human): implement this test — subscribe a client, call delete() twice
+// (sequentially is enough to reproduce the index-out-of-range), and verify
+// the panic occurs. Use defer+recover to catch it.
+func TestDeleteCalledTwicePanics(t *testing.T) {
 }
 
 // ── TestDelete ────────────────────────────────────────────────────────────────

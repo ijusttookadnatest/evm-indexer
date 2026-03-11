@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"log/slog"
 	"sync"
 )
 
@@ -19,35 +20,39 @@ type SubscriptionFilter struct {
 
 type Entity struct {
    clientsChan map[SubscriptionFilter][]chan[]byte
-   mu *sync.RWMutex
-   incoming chan any
+   mu          *sync.RWMutex
+   incoming    chan any
+   name        string
 }
 
-func newEntity(c chan any) *Entity {
-	clientsChan := make(map[SubscriptionFilter][]chan[]byte)
+func newEntity(name string, c chan any) *Entity {
 	return &Entity{
-		clientsChan:clientsChan,
-		mu: &sync.RWMutex{},
-		incoming: c,
+		clientsChan: make(map[SubscriptionFilter][]chan[]byte),
+		mu:          &sync.RWMutex{},
+		incoming:    c,
+		name:        name,
 	}
 }
 
 func (entity Entity) broadcast() {
    for {
 		data := <- entity.incoming
-		bytes, err := json.Marshal(data)
+		payload, err := json.Marshal(data)
 		if err != nil {
-			// error handling
+			slog.Error("broadcast: marshal failed", "err", err)
+      		continue
 		}
-		var payload = new(PayloadFilter)
+		var filteredPayload = new(PayloadFilter)
 		
-		err = json.Unmarshal(bytes, &payload)
+		err = json.Unmarshal(payload, &filteredPayload)
 		if err != nil {
-			// error handling
+			slog.Error("broadcast: unmarshal failed", "err", err)
+      		continue
 		}
+		bytes, _ := marshalWSMessage(entity.name, data)
 		entity.mu.RLock()
 		for filter, clientsChan := range entity.clientsChan {
-			if matchesFilter(filter, *payload) {
+			if matchesFilter(filter, *filteredPayload) {
 				for _, clientChan := range clientsChan {
 					select {
 					case clientChan <- bytes:
