@@ -27,7 +27,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 	
-	g, context := errgroup.WithContext(ctx)
+	g, ctx := errgroup.WithContext(ctx)
 	indexerStreams := domain.IndexerStreams{
 		Block:  make(chan any, 10),
 		Txs:    make(chan any, 10),
@@ -56,11 +56,11 @@ func run(ctx context.Context) error {
 	server := server.NewHTTPServer(handlers, cfg.Port)
 
 	g.Go(func() error {
-		return indexerService.Run(context, cfg.From, cfg.ConcurrencyF)
+		return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)
 	})
 
 	g.Go(func() error {
-		return server.Run(context)
+		return server.Run(ctx)
 	})
 
 	return g.Wait()
