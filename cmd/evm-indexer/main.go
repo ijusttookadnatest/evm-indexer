@@ -26,7 +26,8 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
+	
+	g, context := errgroup.WithContext(ctx)
 	indexerStreams := domain.IndexerStreams{
 		Block:  make(chan any, 10),
 		Txs:    make(chan any, 10),
@@ -48,13 +49,12 @@ func run(ctx context.Context) error {
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
 	handlers := []http.Handler{
-		ws.NewRouter(indexerStreams),
+		ws.NewRouter(ctx, indexerStreams),
 		rest.NewRouter(queryService),
 		graphql.NewRouter(queryService, cfg.PlaygroundEnabled),
 	}
 	server := server.NewHTTPServer(handlers, cfg.Port)
 
-	g, context := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		return indexerService.Run(context, cfg.From, cfg.ConcurrencyF)
 	})

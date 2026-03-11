@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 
@@ -81,16 +82,23 @@ func (client *Client) delete() {
 	})
 }
 
-func (client *Client) messageWriter() {
+func (client *Client) messageWriter(ctx context.Context) {
 	for {
-		message, ok := <- client.outgoing
-		if !ok {
-			return
-		}
-		err := client.conn.WriteMessage(websocket.TextMessage, message)
-		if err != nil {
+		select {
+		case <-ctx.Done(): {
 			client.delete()
 			return
+		}
+		case message, ok := <- client.outgoing: {
+			if !ok {
+				return
+			}
+			err := client.conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				client.delete()
+				return
+			}
+		}
 		}
 	}
 }

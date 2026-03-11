@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"sync"
@@ -34,33 +35,39 @@ func newEntity(name string, c chan any) *Entity {
 	}
 }
 
-func (entity Entity) broadcast() {
+func (entity Entity) broadcast(ctx context.Context) {
    for {
-		data := <- entity.incoming
-		payload, err := json.Marshal(data)
-		if err != nil {
-			slog.Error("broadcast: marshal failed", "err", err)
-      		continue
+		select {
+		case <-ctx.Done(): {
+			return 
 		}
-		var filteredPayload = new(PayloadFilter)
-		
-		err = json.Unmarshal(payload, &filteredPayload)
-		if err != nil {
-			slog.Error("broadcast: unmarshal failed", "err", err)
-      		continue
-		}
-		bytes, _ := marshalWSMessage(entity.name, data)
-		entity.mu.RLock()
-		for filter, clientsChan := range entity.clientsChan {
-			if matchesFilter(filter, *filteredPayload) {
-				for _, clientChan := range clientsChan {
-					select {
-					case clientChan <- bytes:
-					default:
+		case data := <- entity.incoming: {
+			payload, err := json.Marshal(data)
+			if err != nil {
+				slog.Error("broadcast: marshal failed", "err", err)
+				  continue
+			}
+			var filteredPayload = new(PayloadFilter)
+			
+			err = json.Unmarshal(payload, &filteredPayload)
+			if err != nil {
+				slog.Error("broadcast: unmarshal failed", "err", err)
+				  continue
+			}
+			bytes, _ := marshalWSMessage(entity.name, data)
+			entity.mu.RLock()
+			for filter, clientsChan := range entity.clientsChan {
+				if matchesFilter(filter, *filteredPayload) {
+					for _, clientChan := range clientsChan {
+						select {
+						case clientChan <- bytes:
+						default:
+						}
 					}
 				}
 			}
+			entity.mu.RUnlock()
 		}
-		entity.mu.RUnlock()
+		}
    }
 }

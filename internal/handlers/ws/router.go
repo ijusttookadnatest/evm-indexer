@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"log/slog"
 	"net/http"
@@ -10,10 +11,11 @@ import (
 
 type Handler struct {
 	entities map[string]*Entity
+	ctx context.Context
 }
 
-func NewHandler(entities map[string]*Entity) *Handler {
-	return &Handler{entities: entities}
+func NewHandler(ctx context.Context, entities map[string]*Entity) *Handler {
+	return &Handler{ctx:ctx, entities: entities}
 }
 
 var upgrader = websocket.Upgrader{
@@ -31,7 +33,7 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 	defer conn.Close()
 
 	client := newClient(conn, handler.entities)
-	go client.messageWriter()
+	go client.messageWriter(handler.ctx)
 
 	for {
 		_, message, err := client.conn.ReadMessage()
@@ -50,17 +52,17 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func NewRouter(indexerStreams domain.IndexerStreams) http.Handler {
+func NewRouter(ctx context.Context, indexerStreams domain.IndexerStreams) http.Handler {
 	entities := map[string]*Entity{
 		"blocks":       newEntity("block", indexerStreams.Block),
 		"transactions": newEntity("transaction", indexerStreams.Txs),
 		"events":       newEntity("event", indexerStreams.Events),
 	}
-	handler := NewHandler(entities)
+	handler := NewHandler(ctx, entities)
 
-	go entities["blocks"].broadcast()
-	go entities["transactions"].broadcast()
-	go entities["events"].broadcast()
+	go entities["blocks"].broadcast(ctx)
+	go entities["transactions"].broadcast(ctx)
+	go entities["events"].broadcast(ctx)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", handler.entitySubscription)

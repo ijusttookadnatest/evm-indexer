@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
 	entity.clientsChan[SubscriptionFilter{}] = []chan []byte{clientChan}
 	entity.mu.Unlock()
 
-	go entity.broadcast()
+	go entity.broadcast(context.Background())
 
 	incoming <- make(chan int) // json.Marshal fails on channel types
 
@@ -49,7 +50,7 @@ func TestBroadcastSlowClientDropsMessage(t *testing.T) {
 	entity.clientsChan[SubscriptionFilter{}] = []chan []byte{slowChan}
 	entity.mu.Unlock()
 
-	go entity.broadcast()
+	go entity.broadcast(context.Background())
 
 	incoming <- domain.Block{Id: 1, Hash: "0xabc"}
 	time.Sleep(100 * time.Millisecond)
@@ -118,7 +119,7 @@ func TestBroadcast(t *testing.T) {
 			entity.clientsChan[tc.filter] = []chan []byte{clientChan}
 			entity.mu.Unlock()
 
-			go entity.broadcast()
+			go entity.broadcast(context.Background())
 
 			incoming <- tc.payload
 

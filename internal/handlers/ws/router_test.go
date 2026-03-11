@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"strings"
@@ -22,7 +23,7 @@ func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
 		Txs:    make(chan any),
 		Events: make(chan any),
 	}
-	srv := httptest.NewServer(NewRouter(streams))
+	srv := httptest.NewServer(NewRouter(context.Background(), streams))
 	defer srv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
@@ -48,5 +49,36 @@ func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
 	}
 	if response.Type != "error" {
 		t.Errorf("expected type %q, got %q", "error", response.Type)
+	}
+}
+
+// ── TestEntitySubscriptionClosedOnContextCancel ───────────────────────────────
+//
+// When the server context is cancelled, the messageWriter calls client.delete()
+// which closes the connection, causing ReadMessage to return an error and
+// unblocking the entitySubscription loop. The client should observe a close frame.
+func TestEntitySubscriptionClosedOnContextCancel(t *testing.T) {
+	streams := domain.IndexerStreams{
+		Block:  make(chan any),
+		Txs:    make(chan any),
+		Events: make(chan any),
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	srv := httptest.NewServer(NewRouter(ctx, streams))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	cancel()
+
+	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	_, _, err = conn.ReadMessage()
+	if err == nil {
+		t.Error("expected connection to be closed after context cancel, but ReadMessage succeeded")
 	}
 }

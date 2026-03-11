@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -160,7 +161,7 @@ func TestMessageWriterCleansUpOnWriteError(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		client.messageWriter()
+		client.messageWriter(context.Background())
 		close(done)
 	}()
 
@@ -178,6 +179,45 @@ func TestMessageWriterCleansUpOnWriteError(t *testing.T) {
 	entities["blocks"].mu.RUnlock()
 	if after != 0 {
 		t.Errorf("expected 0 clients after write error, got %d", after)
+	}
+}
+
+// ── TestMessageWriterExitsOnContextCancel ─────────────────────────────────────
+//
+// HANDLED: messageWriter exits cleanly when the context is cancelled, calling
+// delete() to remove the client from all subscriptions.
+func TestMessageWriterExitsOnContextCancel(t *testing.T) {
+	conn, cleanup := newTestWSConn(t)
+	defer cleanup()
+
+	entities := testEntities()
+	client := newClient(conn, entities)
+
+	if err := client.subscribe(subMsg("subscribe", "blocks", "", "")); err != nil {
+		t.Fatalf("subscribe: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		client.messageWriter(ctx)
+		close(done)
+	}()
+
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("messageWriter did not exit after context cancel")
+	}
+
+	filter := SubscriptionFilter{}
+	entities["blocks"].mu.RLock()
+	after := len(entities["blocks"].clientsChan[filter])
+	entities["blocks"].mu.RUnlock()
+	if after != 0 {
+		t.Errorf("expected 0 clients after context cancel, got %d", after)
 	}
 }
 
