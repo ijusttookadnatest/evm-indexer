@@ -16,7 +16,6 @@ func NewHandler(entities map[string]*Entity) *Handler {
 	return &Handler{entities: entities}
 }
 
-
 var upgrader = websocket.Upgrader{
     CheckOrigin: func(r *http.Request) bool {
        return true
@@ -52,12 +51,12 @@ func NewRouter(indexerStreams domain.IndexerStreams) http.Handler {
    }
    handler := NewHandler(entities)
 
-   mux := http.NewServeMux()
-   mux.HandleFunc("/ws", handler.entitySubscription)
-
    go entities["blocks"].broadcast()
    go entities["transactions"].broadcast()
    go entities["events"].broadcast()
+
+   mux := http.NewServeMux()
+   mux.HandleFunc("/ws", handler.entitySubscription)
 
    return mux
 }

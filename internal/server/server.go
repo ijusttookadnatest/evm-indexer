@@ -44,13 +44,13 @@ func (s *Server) Run(ctx context.Context) error {
 	select {
         case err := <-errChan:
             slog.Info("Server error: ", "err", err)
-        case sig := <-ctx.Done():
-            slog.Info("Received shutdown signal: ","sig", sig)
+        case <-ctx.Done():
+            slog.Info("Received shutdown signal: ","reason", ctx.Err())
     }
 
     slog.Info("Server is shutting down...")
 
-    ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
 
     if err := s.Server.Shutdown(ctx); err != nil {
