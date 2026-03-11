@@ -19,6 +19,7 @@ type mockFFRepo struct {
 
 func (m *mockFFRepo) GetBackfillCursor() (uint64, error)  { return 0, nil }
 func (m *mockFFRepo) UpdateBackfillCursor(_ uint64) error { return nil }
+func (m *mockFFRepo) ResetBackfillCursor() error          { return nil }
 func (m *mockFFRepo) Delete(_ int) error                  { return nil }
 func (m *mockFFRepo) Create(_ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
 	m.createCalls++

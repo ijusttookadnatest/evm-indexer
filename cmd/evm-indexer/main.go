@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,7 +22,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, reindex bool) error {
 	cfg, err := config.Load(".env")
 	if err != nil {
 		return err
@@ -40,6 +41,13 @@ func run(ctx context.Context) error {
 	}
 
 	indexerRepo := repository.NewIndexerRepository(db)
+
+	if reindex {
+		if err := indexerRepo.ResetBackfillCursor(); err != nil {
+			return err
+		}
+	}
+
 	fetcher, err := fetcher.NewFetcher(cfg.Rpc)
 	if err != nil {
 		return err
@@ -67,10 +75,13 @@ func run(ctx context.Context) error {
 }
 
 func main() {
+	reindex := flag.Bool("reindex", false, "reset backfill cursor to re-index from scratch")
+	flag.Parse()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	if err := run(ctx); err != nil {
+	if err := run(ctx, *reindex); err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}

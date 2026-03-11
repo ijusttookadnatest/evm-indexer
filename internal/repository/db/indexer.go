@@ -81,6 +81,11 @@ func (repo *IndexerRepository) UpdateBackfillCursor(blockId uint64) error {
 	return err
 }
 
+func (repo *IndexerRepository) ResetBackfillCursor() error {
+	_, err := repo.db.Exec(`UPDATE backfill_cursor SET last_block_id = 0;`)
+	return err
+}
+
 func (repo *IndexerRepository) Delete(blockId int) error {
 	_, err := repo.db.Exec(`
 		DELETE FROM blocks WHERE block_id = $1;

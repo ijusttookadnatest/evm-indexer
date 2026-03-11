@@ -37,6 +37,8 @@ func (m *mockIndexerRepo) Delete(_ int) error {
 	return m.deleteErr
 }
 
+func (m *mockIndexerRepo) ResetBackfillCursor() error { return nil }
+
 type mockBackfiller struct {
 	lastBlockId    uint64
 	lastBlockIdErr error

@@ -87,6 +87,25 @@ func TestBackfillCursor_Integration(t *testing.T) {
 	})
 }
 
+func TestResetBackfillCursor_Integration(t *testing.T) {
+	indexerRepo := NewIndexerRepository(testDB)
+
+	_ = indexerRepo.UpdateBackfillCursor(12345)
+
+	err := indexerRepo.ResetBackfillCursor()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	cursor, err := indexerRepo.GetBackfillCursor()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cursor != 0 {
+		t.Errorf("want 0 after reset, got %d", cursor)
+	}
+}
+
 func TestDelete_Integration(t *testing.T) {
 	truncateAll(t)
 	seedFixtures(t)

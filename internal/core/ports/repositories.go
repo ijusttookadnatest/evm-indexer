@@ -25,4 +25,5 @@ type IndexerRepository interface {
 	Delete(blockId int) error
 	GetBackfillCursor() (uint64, error)
 	UpdateBackfillCursor(blockId uint64) error
+	ResetBackfillCursor() error
 }
