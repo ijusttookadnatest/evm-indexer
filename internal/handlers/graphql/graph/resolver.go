@@ -1,6 +1,6 @@
 package graph
 
-import "github/ijusttookadnatest/indexer-evm/internal/core/ports"
+import "github/ijusttookadnatest/evm-indexer/internal/core/ports"
 
 // This file will not be regenerated automatically.
 //

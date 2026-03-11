@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 // --- Block queries ---

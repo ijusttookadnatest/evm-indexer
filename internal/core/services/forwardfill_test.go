@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 // mockFFRepo is a dedicated repo mock for forwardfill tests.
@@ -17,9 +17,9 @@ type mockFFRepo struct {
 	onCreate    chan struct{}
 }
 
-func (m *mockFFRepo) GetBackfillCursor() (uint64, error)    { return 0, nil }
-func (m *mockFFRepo) UpdateBackfillCursor(_ uint64) error   { return nil }
-func (m *mockFFRepo) Delete(_ int) error                    { return nil }
+func (m *mockFFRepo) GetBackfillCursor() (uint64, error)  { return 0, nil }
+func (m *mockFFRepo) UpdateBackfillCursor(_ uint64) error { return nil }
+func (m *mockFFRepo) Delete(_ int) error                  { return nil }
 func (m *mockFFRepo) Create(_ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
 	m.createCalls++
 	if m.createErr != nil {

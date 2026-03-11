@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -17,8 +17,8 @@ import (
 	"github.com/cenkalti/backoff/v5"
 )
 
-type ethWrapper struct { 
-	*ethclient.Client 
+type ethWrapper struct {
+	*ethclient.Client
 }
 
 func (w *ethWrapper) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
@@ -62,9 +62,10 @@ type RPCBlock struct {
 	Transactions []RPCTransaction `json:"transactions"`
 }
 
-
 func wrapRetryError(err error) error {
-	if err == nil {return err}
+	if err == nil {
+		return err
+	}
 	var rpcErr rpc.Error
 	if errors.As(err, &rpcErr) {
 		code := rpcErr.ErrorCode()
@@ -80,7 +81,7 @@ func (b *Fetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 	idHex := fmt.Sprintf("0x%x", id)
 	body := new(RPCBlock)
 
-	callContext := func() (struct{},error) {
+	callContext := func() (struct{}, error) {
 		err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true)
 		return struct{}{}, wrapRetryError(err)
 	}
@@ -90,7 +91,7 @@ func (b *Fetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 		return domain.BlockTxsEvents{}, err
 	}
 
-	blockReceipts := func() ([]*types.Receipt,error) {
+	blockReceipts := func() ([]*types.Receipt, error) {
 		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
 		return receipts, wrapRetryError(err)
 	}
@@ -117,37 +118,39 @@ func (b *Fetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
 }
 
 func (b *Fetcher) GetLastBlockId() (uint64, error) {
-	blockNumber := func() (uint64,error) {
+	blockNumber := func() (uint64, error) {
 		res, err := b.client.BlockNumber(context.Background())
 		return res, wrapRetryError(err)
 	}
 	return backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
 }
 
-
 func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 	defer close(c)
-	
-	op := func() (struct{},error) {
+
+	op := func() (struct{}, error) {
 		newHeader := make(chan *types.Header)
 		sub, err := f.client.SubscribeNewHead(ctx, newHeader)
 		if err != nil {
 			return struct{}{}, backoff.Permanent(err)
 		}
-	
+
 		for {
 			select {
-			case result := <-newHeader: {
-				c <- result.Number.Uint64()
-			}
-			case err := <-sub.Err(): {
-				sub.Unsubscribe()
-				return struct{}{}, err
-			}
-			case <-ctx.Done(): {
-				sub.Unsubscribe()
-				return struct{}{}, backoff.Permanent(ctx.Err())
-			}
+			case result := <-newHeader:
+				{
+					c <- result.Number.Uint64()
+				}
+			case err := <-sub.Err():
+				{
+					sub.Unsubscribe()
+					return struct{}{}, err
+				}
+			case <-ctx.Done():
+				{
+					sub.Unsubscribe()
+					return struct{}{}, backoff.Permanent(ctx.Err())
+				}
 			}
 		}
 	}

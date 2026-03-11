@@ -2,16 +2,16 @@ package rest
 
 import (
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"net/http"
 	"strconv"
 )
 
 var (
-	IdParam          = 1
-	HashParam        = 2
-	FromOffsetParam  = 3
-	FromToTimeParam  = 4
+	IdParam         = 1
+	HashParam       = 2
+	FromOffsetParam = 3
+	FromToTimeParam = 4
 )
 
 type groupParam = int
@@ -224,4 +224,3 @@ func extractTxFilter(r *http.Request) (domain.TransactionFilter, error) {
 
 	return filter, nil
 }
-

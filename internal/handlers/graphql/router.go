@@ -3,8 +3,8 @@ package graphql
 import (
 	"net/http"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
-	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"

@@ -8,7 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph/dto"
 	"strconv"
 	"sync"
 	"sync/atomic"

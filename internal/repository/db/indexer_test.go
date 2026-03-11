@@ -5,7 +5,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"testing"
 )
 

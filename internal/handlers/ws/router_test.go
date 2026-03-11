@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+
 	"github.com/gorilla/websocket"
 )
 

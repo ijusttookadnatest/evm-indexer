@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 type QueryRepository interface {

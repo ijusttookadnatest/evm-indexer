@@ -8,8 +8,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
-	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph/dto"
 )
 
 // Transactions is the resolver for the transactions field.

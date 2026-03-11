@@ -1,4 +1,4 @@
-module github/ijusttookadnatest/indexer-evm
+module github/ijusttookadnatest/evm-indexer
 
 go 1.25.3
 

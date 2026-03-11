@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 
 	"github.com/lib/pq"
 )

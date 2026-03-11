@@ -5,53 +5,53 @@ import (
 	"errors"
 	"testing"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 )
 
 func TestRun(t *testing.T) {
 	tests := []struct {
-		name    string
-		repo          ports.IndexerRepository
-		fetcher       ports.Fetcher
+		name           string
+		repo           ports.IndexerRepository
+		fetcher        ports.Fetcher
 		indexerStreams domain.IndexerStreams
-		from          uint64
-		wantErr       bool
+		from           uint64
+		wantErr        bool
 	}{
 		{
-			name:    "GetLastBlockId error returns immediately",
-			repo:    &mockIndexerRepo{},
-			fetcher: &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
+			name:           "GetLastBlockId error returns immediately",
+			repo:           &mockIndexerRepo{},
+			fetcher:        &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
 			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
-			wantErr: true,
+			wantErr:        true,
 		},
 		{
-			name:    "GetBackfillCursor error propagates",
-			repo:    &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
-			fetcher: &mockBackfiller{lastBlockId: 5},
+			name:           "GetBackfillCursor error propagates",
+			repo:           &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
+			fetcher:        &mockBackfiller{lastBlockId: 5},
 			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
-			wantErr: true,
+			wantErr:        true,
 		},
 		{
-			name:    "FetchBlock error propagates",
-			repo:    &mockIndexerRepo{},
-			fetcher: &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
+			name:           "FetchBlock error propagates",
+			repo:           &mockIndexerRepo{},
+			fetcher:        &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
 			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
-			wantErr: true,
+			wantErr:        true,
 		},
 		{
-			name:    "repo.Create error propagates",
-			repo:    &mockIndexerRepo{createErr: errors.New("db write failed")},
-			fetcher: &mockBackfiller{lastBlockId: 2},
+			name:           "repo.Create error propagates",
+			repo:           &mockIndexerRepo{createErr: errors.New("db write failed")},
+			fetcher:        &mockBackfiller{lastBlockId: 2},
 			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
-			wantErr: true,
+			wantErr:        true,
 		},
 		{
-			name:    "Subscribe error propagates",
-			repo:    &mockIndexerRepo{},
-			fetcher: &mockFFFetcher{subErr: errors.New("ws disconnected")},
+			name:           "Subscribe error propagates",
+			repo:           &mockIndexerRepo{},
+			fetcher:        &mockFFFetcher{subErr: errors.New("ws disconnected")},
 			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
-			wantErr: true,
+			wantErr:        true,
 		},
 	}
 

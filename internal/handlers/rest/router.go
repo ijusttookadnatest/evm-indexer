@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 	"net/http"
 )
 

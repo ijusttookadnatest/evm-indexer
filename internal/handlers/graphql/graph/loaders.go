@@ -2,8 +2,8 @@ package graph
 
 import (
 	"context"
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
-	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph/dto"
 	"net/http"
 	"time"
 
@@ -92,7 +92,7 @@ func Middleware(service ports.QueryService, next http.Handler) http.Handler {
 	// return a middleware that injects the loader to the request context
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
-        defer cancel()
+		defer cancel()
 
 		loaders := NewLoaders(service)
 		r = r.WithContext(context.WithValue(ctx, loadersKey, loaders))

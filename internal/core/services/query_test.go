@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 // mockRepo satisfies ports.QueryRepository without a real DB.

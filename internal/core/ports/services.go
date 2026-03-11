@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 type QueryService interface {
@@ -25,6 +25,3 @@ type IndexerService interface {
 	ForwardFill() error
 	// Delete(blockId int) error
 }
-
-
-

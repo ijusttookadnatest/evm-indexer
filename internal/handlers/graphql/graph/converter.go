@@ -1,19 +1,19 @@
 package graph
 
 import (
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
-	"github/ijusttookadnatest/indexer-evm/internal/handlers/graphql/graph/dto"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph/dto"
 )
 
 func toBlockDTO(b domain.BlockTxs) *dto.Block {
-	return &dto.Block {
-		ID : 		b.Block.Id,
-		GasLimit : 	b.Block.GasLimit,
-		GasUsed : 	b.Block.GasUsed,
-		Hash : 		b.Block.Hash,
-		Miner : 		b.Block.Miner,
-		ParentHash : 	b.Block.ParentHash,
-		Timestamp : 	b.Block.Timestamp,
+	return &dto.Block{
+		ID:         b.Block.Id,
+		GasLimit:   b.Block.GasLimit,
+		GasUsed:    b.Block.GasUsed,
+		Hash:       b.Block.Hash,
+		Miner:      b.Block.Miner,
+		ParentHash: b.Block.ParentHash,
+		Timestamp:  b.Block.Timestamp,
 	}
 }
 

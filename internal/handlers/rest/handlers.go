@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
-	"github/ijusttookadnatest/indexer-evm/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 )
 
 type Handler struct {

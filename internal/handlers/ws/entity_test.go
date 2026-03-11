@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 // ── TestBroadcastMarshalError ──────────────────────────────────────────────────
@@ -115,7 +115,7 @@ func TestBroadcast(t *testing.T) {
 
 			clientChan := make(chan []byte, 1)
 			entity.mu.Lock()
-			entity.clientsChan[tc.filter] = []chan[]byte{clientChan}
+			entity.clientsChan[tc.filter] = []chan []byte{clientChan}
 			entity.mu.Unlock()
 
 			go entity.broadcast()

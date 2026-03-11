@@ -3,7 +3,7 @@ package ws
 import (
 	"encoding/json"
 
-	"github/ijusttookadnatest/indexer-evm/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 type WSMessage struct {
@@ -35,7 +35,7 @@ func extractFilter(sub SubscribeMessage) SubscriptionFilter {
 	}
 	return SubscriptionFilter{
 		Address: address,
-		Topic0: topic0,
+		Topic0:  topic0,
 	}
 }
 
