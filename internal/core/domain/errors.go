@@ -19,3 +19,5 @@ var ErrInvalidTimeRange = errors.New("invalid time range")
 var ErrInvalidLimit = errors.New("invalid limit")
 var ErrInvalidTopics = errors.New("invalid topics")
 
+var ErrInvalidSubscription = errors.New("invalid subscription")
+
