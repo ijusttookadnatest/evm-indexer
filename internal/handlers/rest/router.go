@@ -9,10 +9,10 @@ func NewRouter(service ports.QueryService) http.Handler {
 	mux := http.NewServeMux()
 	handler := NewHandler(service)
 
-	mux.HandleFunc("GET api/blocks", handler.GetBlock)
-	mux.HandleFunc("GET api/transactions", handler.GetTransaction)
-	mux.HandleFunc("GET api/events", handler.GetEvent)
-	mux.HandleFunc("GET api/events/log", handler.GetEventByTxLog)
+	mux.HandleFunc("GET /blocks", handler.GetBlock)
+	mux.HandleFunc("GET /transactions", handler.GetTransaction)
+	mux.HandleFunc("GET /events", handler.GetEvent)
+	mux.HandleFunc("GET /events/log", handler.GetEventByTxLog)
 
 	return mux
 }

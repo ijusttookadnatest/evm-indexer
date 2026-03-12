@@ -65,7 +65,7 @@ func NewRouter(ctx context.Context, indexerStreams domain.IndexerStreams) http.H
 	go entities["events"].broadcast(ctx)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", handler.entitySubscription)
+	mux.HandleFunc("/", handler.entitySubscription)
 
 	return mux
 }

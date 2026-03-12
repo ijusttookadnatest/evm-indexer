@@ -13,7 +13,7 @@ type Server struct {
 	Server *http.Server
 }
 
-func NewHTTPServer(routers []http.Handler, port string) *Server {
+func NewHTTPServer(restHandler, wsHandler, graphqlHandler http.Handler, port string) *Server {
 	mux := http.NewServeMux()
 	
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -21,9 +21,9 @@ func NewHTTPServer(routers []http.Handler, port string) *Server {
 		fmt.Fprintf(w, "ok")
 	})
 
-	for i := range routers {
-		mux.Handle("/", routers[i])
-	}
+	mux.Handle("/api", restHandler)
+	mux.Handle("/ws", wsHandler)
+	mux.Handle("/graphql", graphqlHandler)
 
 	return &Server{
 		Server: &http.Server{

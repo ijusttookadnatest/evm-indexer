@@ -35,9 +35,9 @@ func NewRouter(service ports.QueryService, playgroundEnabled bool) http.Handler 
 	srv := NewHandler(service)
 
 	if playgroundEnabled {
-		mux.Handle("/graphql/playground", playground.Handler("GraphQL playground", "/graphql/playground"))
+		mux.Handle("/playground", playground.Handler("GraphQL playground", "/graphql/playground"))
 	}
-	mux.Handle("/graphql", graph.Middleware(service, srv))
+	mux.Handle("/", graph.Middleware(service, srv))
 
 	return mux
 }
