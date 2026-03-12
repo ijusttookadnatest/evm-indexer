@@ -8,6 +8,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var offsetDefault uint64 = 100
+var rangeTimeDefault uint64 = 3600
+var concurrencyDefault int = 2
+var fromDefault uint64 = 0
+
 type Config struct {
 	PostgresDSN string
 	RedisDSN    string
@@ -36,27 +41,49 @@ func loadEnv(path string) (map[string]string, error) {
 }
 
 func Load(path string) (*Config,error) {
+	var rangeMaxTime, offsetMax, from uint64
+	var concurrencyF int
+
 	env, err := loadEnv(path)
 	if err != nil {
 		return nil, err
 	}
 
 	pgEnabled := env["PLAYGROUND_ENABLED"] == "true"
-	rangeMaxTime, err := strconv.ParseUint(env["MAX_TIME"], 10, 64)
-	if err != nil {
-		return nil, err
+	if env["MAX_TIME"] != "" {
+		rangeMaxTime, err = strconv.ParseUint(env["MAX_TIME"], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		rangeMaxTime = rangeTimeDefault
 	}
-	offsetMax, err := strconv.ParseUint(env["MAX_OFFSET"], 10, 64)
-	if err != nil {
-		return nil, err
+
+	if env["MAX_OFFSET"] != "" {
+		offsetMax, err = strconv.ParseUint(env["MAX_OFFSET"], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		offsetMax = offsetDefault
 	}
-	from, err := strconv.ParseUint(env["FROM"], 10, 64)
-	if err != nil {
-		return nil, err
+
+	if env["FROM"] != "" {
+		from, err = strconv.ParseUint(env["FROM"], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		from = fromDefault
 	}
-	concurrencyF, err := strconv.Atoi(env["CONCURRENCY_FACTOR"])
-	if err != nil {
-		return nil, err
+
+	if env["CONCURRENCY_FACTOR"] != "" {
+		concurrencyF, err = strconv.Atoi(env["CONCURRENCY_FACTOR"])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		concurrencyF = concurrencyDefault
 	}
 
 	return &Config{
