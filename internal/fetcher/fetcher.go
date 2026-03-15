@@ -70,7 +70,6 @@ type RPCBlock struct {
 
 func wrapRetryError(err error) error {
 	if err == nil {
-		slog.Info(".")
 		return nil
 	}
 	var rpcErr rpc.Error
@@ -80,7 +79,6 @@ func wrapRetryError(err error) error {
 			return backoff.Permanent(err)
 		}
 	}
-	slog.Info("ERROR:LIMITER")
 	return err
 }
 
