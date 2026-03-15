@@ -16,17 +16,17 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 	for {
 		select {
 		case id := <-c: {
-			data, err := s.fetcher.FetchBlock(id)
+			data, err := s.fetcher.FetchBlock(ctx, id)
 			if err != nil {
 				slog.Error("forwardfill: failed to fetch block", "blockId", id, "err", err)
 				return err
 			}
-			slog.Info("forwardfill: block fetched", "blockId", id)
+			slog.Debug("forwardfill: block fetched", "blockId", id)
 
 			s.indexerStreams.Block <- data.Block
 			s.indexerStreams.Txs <- data.Txs
 			s.indexerStreams.Events <- data.Events
-			slog.Info("forwardfill: data sent to indexer streams")
+			slog.Debug("forwardfill: data sent to indexer streams")
 
 			err = s.repo.Create(data.Block, data.Txs, data.Events)
 			if err != nil {

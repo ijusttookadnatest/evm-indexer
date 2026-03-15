@@ -212,7 +212,7 @@ func TestFetchBlock(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &Fetcher{client: tt.client}
-			got, err := b.FetchBlock(tt.blockId)
+			got, err := b.FetchBlock(context.Background(), tt.blockId)
 
 			if tt.wantErr {
 				if err == nil {

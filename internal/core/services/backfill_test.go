@@ -49,7 +49,7 @@ func (m *mockBackfiller) GetLastBlockId() (uint64, error) {
 	return m.lastBlockId, m.lastBlockIdErr
 }
 
-func (m *mockBackfiller) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
+func (m *mockBackfiller) FetchBlock(_ context.Context, id uint64) (domain.BlockTxsEvents, error) {
 	if m.fetchErr != nil {
 		return domain.BlockTxsEvents{}, m.fetchErr
 	}

@@ -4,6 +4,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -13,7 +14,7 @@ func extractEvent(log types.Log) domain.Event {
 		TxHash:   log.TxHash.Hex(),
 		LogIndex: uint64(log.Index),
 		Emitter:  log.Address.Hex(),
-		Datas:    string(log.Data),
+		Datas:    hexutil.Encode(log.Data),
 		Topics:   extractTopics(log.Topics),
 	}
 }

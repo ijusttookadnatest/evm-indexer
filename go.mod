@@ -13,6 +13,7 @@ require (
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/vektah/gqlparser/v2 v2.5.31
 	golang.org/x/sync v0.19.0
+	golang.org/x/time v0.9.0
 )
 
 require (

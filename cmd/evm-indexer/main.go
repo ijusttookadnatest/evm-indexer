@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,7 +39,6 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	repository.RunDownMigrations(db)
 	if err := repository.RunUpMigrations(db) ; err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func run(ctx context.Context, reindex bool) error {
 		}
 	}
 
-	fetcher, err := fetcher.NewFetcher(cfg.Rpc)
+	fetcher, err := fetcher.NewFetcher(cfg.Rpc, cfg.RpcRateLimit)
 	if err != nil {
 		return err
 	}
@@ -77,6 +77,10 @@ func run(ctx context.Context, reindex bool) error {
 }
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
+
 	reindex := flag.Bool("reindex", false, "reset backfill cursor to re-index from scratch")
 	flag.Parse()
 

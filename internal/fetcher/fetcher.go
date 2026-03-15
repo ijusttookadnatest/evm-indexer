@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"log/slog"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"golang.org/x/time/rate"
 
 	"github.com/cenkalti/backoff/v5"
 )
@@ -34,14 +36,18 @@ type EVMClient interface {
 
 type Fetcher struct {
 	client EVMClient
+	rateLimiter *rate.Limiter
 }
 
-func NewFetcher(url string) (*Fetcher, error) {
+func NewFetcher(url string, rpcRateLimit float64) (*Fetcher, error) {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, err
 	}
-	return &Fetcher{client: &ethWrapper{client}}, nil
+	return &Fetcher{
+		client: &ethWrapper{client},
+		rateLimiter: rate.NewLimiter(rate.Limit(rpcRateLimit), 1),
+	}, nil
 }
 
 type RPCTransaction struct {
@@ -64,7 +70,8 @@ type RPCBlock struct {
 
 func wrapRetryError(err error) error {
 	if err == nil {
-		return err
+		slog.Info(".")
+		return nil
 	}
 	var rpcErr rpc.Error
 	if errors.As(err, &rpcErr) {
@@ -73,48 +80,56 @@ func wrapRetryError(err error) error {
 			return backoff.Permanent(err)
 		}
 	}
+	slog.Info("ERROR:LIMITER")
 	return err
 }
 
-func (b *Fetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
-	ctx := context.Background()
+func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEvents, error) {
 	idHex := fmt.Sprintf("0x%x", id)
-	body := new(RPCBlock)
 
-	callContext := func() (struct{}, error) {
-		err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true)
-		return struct{}{}, wrapRetryError(err)
-	}
-
-	_, err := backoff.Retry(ctx, callContext, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
-	if err != nil {
-		return domain.BlockTxsEvents{}, err
-	}
-
-	blockReceipts := func() ([]*types.Receipt, error) {
-		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
-		return receipts, wrapRetryError(err)
-	}
-	receipts, err := backoff.Retry(ctx, blockReceipts, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
-	if err != nil {
-		return domain.BlockTxsEvents{}, err
-	}
-
-	block := extractBlock(*body)
-
-	txs := make([]domain.Transaction, len(body.Transactions))
-	for i, tx := range body.Transactions {
-		txs[i] = extractTransaction(tx, *receipts[i])
-	}
-
-	var events []domain.Event
-	for _, receipt := range receipts {
-		for _, log := range receipt.Logs {
-			events = append(events, extractEvent(*log))
+	fetchAll := func() (domain.BlockTxsEvents, error) {
+		if err := b.rateLimiter.Wait(ctx); err != nil {
+			return domain.BlockTxsEvents{}, backoff.Permanent(err)
 		}
+
+		body := new(RPCBlock)
+		if err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true); err != nil {
+			return domain.BlockTxsEvents{}, wrapRetryError(err)
+		}
+
+		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
+		if err != nil {
+			return domain.BlockTxsEvents{}, wrapRetryError(err)
+		}
+
+		block := extractBlock(*body)
+		txs := make([]domain.Transaction, len(body.Transactions))
+		for i, tx := range body.Transactions {
+			txs[i] = extractTransaction(tx, *receipts[i])
+		}
+		var events []domain.Event
+		for _, receipt := range receipts {
+			for _, log := range receipt.Logs {
+				events = append(events, extractEvent(*log))
+			}
+		}
+		return domain.BlockTxsEvents{Block: block, Txs: txs, Events: events}, nil
 	}
 
-	return domain.BlockTxsEvents{Block: block, Txs: txs, Events: events}, nil
+	notify := func(err error, d time.Duration) {
+		slog.Info("retrying", "err", err, "in", d)
+	}
+
+	result, err := backoff.Retry(ctx, fetchAll,
+		backoff.WithBackOff(backoff.NewExponentialBackOff()),
+		backoff.WithMaxElapsedTime(30*time.Second),
+		backoff.WithNotify(notify),
+	)
+	if err != nil {
+		slog.Error("failed to fetch block", "block", id, "err", err)
+		return domain.BlockTxsEvents{}, err
+	}
+	return result, nil
 }
 
 func (b *Fetcher) GetLastBlockId() (uint64, error) {
@@ -122,7 +137,11 @@ func (b *Fetcher) GetLastBlockId() (uint64, error) {
 		res, err := b.client.BlockNumber(context.Background())
 		return res, wrapRetryError(err)
 	}
-	return backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
+	res, err := backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
+	if err != nil {
+		slog.Error("failed to get last block number", "err", err)
+	}
+	return res, err
 }
 
 func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
@@ -155,5 +174,8 @@ func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 		}
 	}
 	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
+	if err != nil {
+		slog.Error("subscription failed", "err", err)
+	}
 	return err
 }

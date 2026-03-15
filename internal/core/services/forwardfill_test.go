@@ -41,7 +41,7 @@ type mockFFFetcher struct {
 }
 
 func (m *mockFFFetcher) GetLastBlockId() (uint64, error) { return 0, nil }
-func (m *mockFFFetcher) FetchBlock(id uint64) (domain.BlockTxsEvents, error) {
+func (m *mockFFFetcher) FetchBlock(_ context.Context, id uint64) (domain.BlockTxsEvents, error) {
 	if m.fetchErr != nil {
 		return domain.BlockTxsEvents{}, m.fetchErr
 	}
