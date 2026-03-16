@@ -44,7 +44,7 @@ func (repo *QueryRepository) GetBlockByHash(ctx context.Context, hash string) (*
 }
 
 func (repo *QueryRepository) GetBlocksByRangeId(ctx context.Context, from, to uint64) ([]domain.Block, error) {
-	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id > $1 AND block_id < $2;`, from, to)
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp FROM blocks WHERE block_id >= $1 AND block_id < $2;`, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (repo *QueryRepository) GetEventsByFilter(ctx context.Context, filter domai
 			($1::TEXT IS NULL OR tx_hash = $1)
 			AND ($2::TEXT IS NULL OR emitter = $2)
 			AND ($3::TEXT[] IS NULL OR topics @> $3)
-			AND ($4::BIGINT IS NULL OR block_id > $4)
+			AND ($4::BIGINT IS NULL OR block_id >= $4)
 			AND ($5::BIGINT IS NULL OR block_id < $5)
 		LIMIT $6;
 		`, filter.TxHash, filter.Emitter, pq.Array(filter.Topics), filter.FromBlock, filter.ToBlock, filter.Limit)
@@ -90,6 +90,9 @@ func (repo *QueryRepository) GetEventByTxHashLogIndex(ctx context.Context, txHas
 	if err != nil {
 		return nil, err
 	}
+	if len(events) == 0 {
+		return nil, domain.ErrNotFound
+	}
 	return &events[0], nil
 }
 
@@ -102,7 +105,7 @@ func (repo *QueryRepository) GetTransactionsByFilter(ctx context.Context, filter
 			AND ($2::TEXT IS NULL OR tx_hash = $2)
 			AND ($3::TEXT IS NULL OR from_addr = $3)
 			AND ($4::TEXT IS NULL OR to_addr = $4)
-			AND ($5::BIGINT IS NULL OR block_id > $5)
+			AND ($5::BIGINT IS NULL OR block_id >= $5)
 			AND ($6::BIGINT IS NULL OR block_id < $6)
 		LIMIT $7;
 		`, filter.BlockId, filter.Hash, filter.From, filter.To, filter.FromBlock, filter.ToBlock, filter.Limit)

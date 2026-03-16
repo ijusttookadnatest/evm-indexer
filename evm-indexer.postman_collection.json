@@ -1,0 +1,367 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "EVM Indexer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "blockId", "value": "24662753", "type": "string" },
+    { "key": "blockHash", "value": "0x28d8d4ee13bee3d26da1804b3ccd0d2ce30ad2ba7e964113cb163fbe962abdcb", "type": "string" },
+    { "key": "txHash", "value": "0x733d5f65066478e4a6d8e694312237781946dc72fc500a8063f3e625bbd03c96", "type": "string" },
+    { "key": "address", "value": "0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97", "type": "string" },
+    { "key": "topic0", "value": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "type": "string" },
+    { "key": "fromBlock", "value": "24662753", "type": "string" },
+    { "key": "toBlock", "value": "24662763", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "REST - Blocks",
+      "item": [
+        {
+          "name": "Get block by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks?id={{blockId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"],
+              "query": [{ "key": "id", "value": "{{blockId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get block by ID with transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks?id={{blockId}}&tx=yes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"],
+              "query": [
+                { "key": "id", "value": "{{blockId}}" },
+                { "key": "tx", "value": "yes" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get block by hash",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks?hash={{blockHash}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"],
+              "query": [{ "key": "hash", "value": "{{blockHash}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get blocks from + offset",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks?from={{fromBlock}}&offset=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"],
+              "query": [
+                { "key": "from", "value": "{{fromBlock}}" },
+                { "key": "offset", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get blocks by time range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks?fromTime=1773576059&toTime=1773576179",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"],
+              "query": [
+                { "key": "fromTime", "value": "1773576059" },
+                { "key": "toTime", "value": "1773576179" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "REST - Transactions",
+      "item": [
+        {
+          "name": "Get transaction by hash",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?hash={{txHash}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "hash", "value": "{{txHash}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get transactions by block range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?fromBlock={{fromBlock}}&toBlock={{toBlock}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "fromBlock", "value": "{{fromBlock}}" },
+                { "key": "toBlock", "value": "{{toBlock}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get transactions by from address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?from={{address}}&fromBlock={{fromBlock}}&toBlock={{toBlock}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "from", "value": "{{address}}" },
+                { "key": "fromBlock", "value": "{{fromBlock}}" },
+                { "key": "toBlock", "value": "{{toBlock}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get transactions by to address + limit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?to=0xdAC17F958D2ee523a2206206994597C13D831ec7&fromBlock={{fromBlock}}&toBlock={{toBlock}}&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "to", "value": "0xdAC17F958D2ee523a2206206994597C13D831ec7" },
+                { "key": "fromBlock", "value": "{{fromBlock}}" },
+                { "key": "toBlock", "value": "{{toBlock}}" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "REST - Events",
+      "item": [
+        {
+          "name": "Get events by emitter address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?address={{address}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [{ "key": "address", "value": "{{address}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get events by topic0",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?topic0={{topic0}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [{ "key": "topic0", "value": "{{topic0}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get events by emitter + topic + block range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?address={{address}}&topic0={{topic0}}&fromBlock={{fromBlock}}&toBlock={{toBlock}}&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events"],
+              "query": [
+                { "key": "address", "value": "{{address}}" },
+                { "key": "topic0", "value": "{{topic0}}" },
+                { "key": "fromBlock", "value": "{{fromBlock}}" },
+                { "key": "toBlock", "value": "{{toBlock}}" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get event by txHash + logIndex",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/log?txHash={{txHash}}&logIndex=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "events", "log"],
+              "query": [
+                { "key": "txHash", "value": "{{txHash}}" },
+                { "key": "logIndex", "value": "0" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL",
+      "item": [
+        {
+          "name": "Block by ID",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ blocks(filter: { id: 24662753 }) { id hash parentHash miner timestamp gasLimit gasUsed } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Blocks by time range with transactions",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ blocks(filter: { fromTime: 1773576059, toTime: 1773576179 }) { id hash timestamp transactions { hash from to gasUsed } } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Blocks from ID + offset",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ blocks(filter: { fromId: 24662753, offset: 5 }) { id hash miner } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Transactions by to address",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ transactions(filter: { to: \\\"0xdAC17F958D2ee523a2206206994597C13D831ec7\\\" }) { hash from to gasUsed } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Transactions with nested events",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ transactions(filter: { to: \\\"0xdAC17F958D2ee523a2206206994597C13D831ec7\\\" }) { hash from to gasUsed events { logIndex emitter data topics } } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Events by emitter",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ events(filter: { emitter: \\\"0xdAC17F958D2ee523a2206206994597C13D831ec7\\\", topics: [] }) { logIndex emitter data topics } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Events by topic (Transfer ERC20)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"{ events(filter: { topics: [\\\"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef\\\"] }) { logIndex emitter data topics } }\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

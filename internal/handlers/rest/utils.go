@@ -30,7 +30,7 @@ type blockDTO struct {
 func extractBlockDTO(r *http.Request) (*blockDTO, error) {
 	query := r.URL.Query()
 
-	var err error = errors.New("invalid parameters")
+	var err error
 	block := blockDTO{}
 	group := 0
 
@@ -60,7 +60,7 @@ func extractBlockDTO(r *http.Request) (*blockDTO, error) {
 	}
 
 	if group != 1 {
-		return nil, err
+		return nil, errors.New("invalid parameters")
 	}
 
 	if block.groupParam == HashParam {
@@ -183,11 +183,7 @@ func extractTxFilter(r *http.Request) (domain.TransactionFilter, error) {
 		return filter, errInvalidParams
 	}
 
-	if hasAddressFilter && !hasRange {
-		return filter, errInvalidParams
-	}
-
-	if !hasHash && !hasRange {
+	if !hasHash && !hasRange && !hasAddressFilter {
 		return filter, errInvalidParams
 	}
 

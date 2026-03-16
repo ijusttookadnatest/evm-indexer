@@ -7,7 +7,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 )
 
-var offsetDefault uint64 = 100
+var offsetDefault uint64 = 1000
 
 type QueryService struct {
 	repo         ports.QueryRepository
@@ -235,7 +235,7 @@ func (service *QueryService) GetEventsByBatchTxsHash(ctx context.Context, txsHas
 }
 
 func (service *QueryService) GetTransactionsByFilter(ctx context.Context, filter domain.TransactionFilter) ([]domain.Transaction, error) {
-	if filter.Hash == nil && filter.BlockId == nil && filter.FromBlock == nil && filter.From == nil && filter.To == nil {
+	if filter.Hash == nil && filter.BlockId == nil && filter.FromBlock == nil && filter.From == nil && filter.To == nil && filter.ToBlock == nil {
 		return nil, domain.ErrEmptyFilter
 	}
 

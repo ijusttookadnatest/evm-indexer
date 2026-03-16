@@ -21,7 +21,7 @@ func NewHTTPServer(restHandler, wsHandler, graphqlHandler http.Handler, port str
 		fmt.Fprintf(w, "ok")
 	})
 
-	mux.Handle("/api", restHandler)
+	mux.Handle("/api/", http.StripPrefix("/api", restHandler))
 	mux.Handle("/ws", wsHandler)
 	mux.Handle("/graphql", graphqlHandler)
 

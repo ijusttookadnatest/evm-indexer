@@ -53,6 +53,8 @@ func run(ctx context.Context) error {
 		return server.Run(ctx)
 	})
 
+	slog.Info("server running", "port", cfg.Port)
+
 	return g.Wait()
 }
 
