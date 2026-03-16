@@ -48,6 +48,10 @@ func (m *mockFFFetcher) FetchBlock(_ context.Context, id uint64) (domain.BlockTx
 	}
 	return domain.BlockTxsEvents{Block: domain.Block{Id: id}}, nil
 }
+func (m *mockFFFetcher) FetchBlockPriority(ctx context.Context, id uint64) (domain.BlockTxsEvents, error) {
+	return m.FetchBlock(ctx, id)
+}
+
 func (m *mockFFFetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 	for _, id := range m.ids {
 		select {

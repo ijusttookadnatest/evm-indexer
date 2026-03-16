@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"golang.org/x/time/rate"
 )
 
 type mockEVMClient struct {
@@ -71,7 +72,7 @@ func TestSubscribe(t *testing.T) {
 		subHeaders := make(chan *types.Header, 1)
 		subErrCh := make(chan error)
 		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
-		f := &Fetcher{client: client}
+		f := &Fetcher{clientWS: client}
 		out := make(chan uint64, 1)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -91,7 +92,7 @@ func TestSubscribe(t *testing.T) {
 
 	t.Run("sends error when SubscribeNewHead fails", func(t *testing.T) {
 		client := &mockEVMClient{subscribeErr: errors.New("connection refused")}
-		f := &Fetcher{client: client}
+		f := &Fetcher{clientWS: client} //nolint
 		errCh := make(chan error, 1)
 		go func() { errCh <- f.Subscribe(context.Background(), make(chan uint64, 1)) }()
 
@@ -109,7 +110,7 @@ func TestSubscribe(t *testing.T) {
 		subHeaders := make(chan *types.Header)
 		subErrCh := make(chan error)
 		client := &mockEVMClient{subHeaders: subHeaders, subErrCh: subErrCh}
-		f := &Fetcher{client: client}
+		f := &Fetcher{clientWS: client}
 		ctx, cancel := context.WithCancel(context.Background())
 		errCh := make(chan error, 1)
 		go func() { errCh <- f.Subscribe(ctx, make(chan uint64)) }()
@@ -211,7 +212,7 @@ func TestFetchBlock(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Fetcher{client: tt.client}
+			b := &Fetcher{clientHTTP: tt.client, rateLimiter: rate.NewLimiter(rate.Inf, 1)}
 			got, err := b.FetchBlock(context.Background(), tt.blockId)
 
 			if tt.wantErr {

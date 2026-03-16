@@ -23,9 +23,9 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	defer cancel()
 
 	g, ctx := errgroup.WithContext(parentCtx)
-	// g.Go(func() error {
-	// 	return i.forwardfill(ctx)
-	// })
+	g.Go(func() error {
+		return i.forwardfill(ctx)
+	})
 	targetId, err := i.fetcher.GetLastBlockId()
 	if err != nil {
 		cancel()

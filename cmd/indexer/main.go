@@ -47,7 +47,7 @@ func run(ctx context.Context, reindex bool) error {
 		}
 	}
 
-	fetcher, err := fetcher.NewFetcher(cfg.Rpc, cfg.RpcRateLimit)
+	fetcher, err := fetcher.NewFetcher(cfg.RpcHTTP, cfg.RpcWS, cfg.RpcRateLimit)
 	if err != nil {
 		return err
 	}

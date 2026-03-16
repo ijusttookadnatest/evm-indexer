@@ -8,6 +8,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
+	"golang.org/x/time/rate"
 )
 
 type mockRPCError struct {
@@ -117,7 +118,7 @@ func TestFetchBlock_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Fetcher{client: tt.client}
+			b := &Fetcher{clientHTTP: tt.client, rateLimiter: rate.NewLimiter(rate.Inf, 1)}
 			_, err := b.FetchBlock(context.Background(), 1)
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
@@ -194,7 +195,7 @@ func TestFetchBlockReceipts_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Fetcher{client: tt.client}
+			b := &Fetcher{clientHTTP: tt.client, rateLimiter: rate.NewLimiter(rate.Inf, 1)}
 			_, err := b.FetchBlock(context.Background(), 1)
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
@@ -266,7 +267,7 @@ func TestGetLastBlockId_Retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Fetcher{client: tt.client}
+			b := &Fetcher{clientHTTP: tt.client, rateLimiter: rate.NewLimiter(rate.Inf, 1)}
 			got, err := b.GetLastBlockId()
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")

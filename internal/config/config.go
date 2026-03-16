@@ -17,7 +17,8 @@ var rpcRateLimitDefault float64 = 1
 type Config struct {
 	PostgresDSN string
 	RedisDSN    string
-	Rpc     	string
+	RpcHTTP     	string
+	RpcWS string
 	Port		string
 	PlaygroundEnabled bool
 	RangeMaxTime uint64
@@ -101,7 +102,8 @@ func Load(path string) (*Config,error) {
 	return &Config{
 		PostgresDSN: fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=disable", env["POSTGRES_USER"], env["POSTGRES_PASSWORD"], env["POSTGRES_HOST"], env["POSTGRES_PORT"], env["POSTGRES_DB"]),
 		RedisDSN:    fmt.Sprintf("redis://:%v@%v:%v/%v", env["REDIS_PASSWORD"], env["REDIS_HOST"], env["REDIS_PORT"], env["REDIS_DB"]),
-		Rpc: env["RPC_URL"],
+		RpcHTTP: env["RPC_HTTP"],
+		RpcWS: env["RPC_WS"],
 		Port: env["PORT"],
 		PlaygroundEnabled: pgEnabled,
 		RangeMaxTime: rangeMaxTime,

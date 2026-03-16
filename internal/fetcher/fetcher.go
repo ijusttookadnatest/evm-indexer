@@ -23,6 +23,8 @@ type ethWrapper struct {
 	*ethclient.Client
 }
 
+type priorityKey struct {}
+
 func (w *ethWrapper) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
 	return w.Client.Client().CallContext(ctx, result, method, args...)
 }
@@ -35,17 +37,23 @@ type EVMClient interface {
 }
 
 type Fetcher struct {
-	client EVMClient
+	clientHTTP EVMClient
+	clientWS EVMClient
 	rateLimiter *rate.Limiter
 }
 
-func NewFetcher(url string, rpcRateLimit float64) (*Fetcher, error) {
-	client, err := ethclient.Dial(url)
+func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, error) {
+	clientHTTP, err := ethclient.Dial(urlHTTP)
+	if err != nil {
+		return nil, err
+	}
+	clientWS, err := ethclient.Dial(urlWS)
 	if err != nil {
 		return nil, err
 	}
 	return &Fetcher{
-		client: &ethWrapper{client},
+		clientHTTP: &ethWrapper{clientHTTP},
+		clientWS: &ethWrapper{clientWS},
 		rateLimiter: rate.NewLimiter(rate.Limit(rpcRateLimit), 1),
 	}, nil
 }
@@ -86,16 +94,18 @@ func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEve
 	idHex := fmt.Sprintf("0x%x", id)
 
 	fetchAll := func() (domain.BlockTxsEvents, error) {
-		if err := b.rateLimiter.Wait(ctx); err != nil {
-			return domain.BlockTxsEvents{}, backoff.Permanent(err)
+		if ctx.Value(priorityKey{}) == nil {
+			if err := b.rateLimiter.Wait(ctx); err != nil {
+				return domain.BlockTxsEvents{}, backoff.Permanent(err)
+			}
 		}
 
 		body := new(RPCBlock)
-		if err := b.client.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true); err != nil {
+		if err := b.clientHTTP.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true); err != nil {
 			return domain.BlockTxsEvents{}, wrapRetryError(err)
 		}
 
-		receipts, err := b.client.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
+		receipts, err := b.clientHTTP.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
 		if err != nil {
 			return domain.BlockTxsEvents{}, wrapRetryError(err)
 		}
@@ -130,9 +140,14 @@ func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEve
 	return result, nil
 }
 
+func (b *Fetcher) FetchBlockPriority(ctx context.Context, id uint64) (domain.BlockTxsEvents, error) {
+	priorityCtx := context.WithValue(ctx, priorityKey{}, true)
+	return b.FetchBlock(priorityCtx, id)
+}
+
 func (b *Fetcher) GetLastBlockId() (uint64, error) {
 	blockNumber := func() (uint64, error) {
-		res, err := b.client.BlockNumber(context.Background())
+		res, err := b.clientHTTP.BlockNumber(context.Background())
 		return res, wrapRetryError(err)
 	}
 	res, err := backoff.Retry(context.Background(), blockNumber, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxElapsedTime(15*time.Second))
@@ -147,7 +162,7 @@ func (f *Fetcher) Subscribe(ctx context.Context, c chan<- uint64) error {
 
 	op := func() (struct{}, error) {
 		newHeader := make(chan *types.Header)
-		sub, err := f.client.SubscribeNewHead(ctx, newHeader)
+		sub, err := f.clientWS.SubscribeNewHead(ctx, newHeader)
 		if err != nil {
 			return struct{}{}, backoff.Permanent(err)
 		}
