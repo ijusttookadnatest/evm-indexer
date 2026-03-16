@@ -14,10 +14,6 @@ import (
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
 	"github/ijusttookadnatest/evm-indexer/internal/fetcher"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
-	// "github/ijusttookadnatest/evm-indexer/internal/handlers/graphql"
-	// "github/ijusttookadnatest/evm-indexer/internal/handlers/rest"
-	// "github/ijusttookadnatest/evm-indexer/internal/handlers/ws"
-	// "github/ijusttookadnatest/evm-indexer/internal/server"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -57,21 +53,9 @@ func run(ctx context.Context, reindex bool) error {
 	}
 	indexerService := service.NewIndexerService(indexerRepo, fetcher, indexerStreams)
 
-	// queryRepo := repository.NewQueryRepository(db)
-	// queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
-	
-	// wsHandler := ws.NewRouter(ctx, indexerStreams)
-	// restHandler := rest.NewRouter(queryService)
-	// graphqHandler := graphql.NewRouter(queryService, cfg.PlaygroundEnabled)
-	// server := server.NewHTTPServer(restHandler, wsHandler, graphqHandler, cfg.Port)
-
 	g.Go(func() error {
 		return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)
 	})
-
-	// g.Go(func() error {
-	// 	return server.Run(ctx)
-	// })
 
 	return g.Wait()
 }
