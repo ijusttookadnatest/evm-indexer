@@ -22,6 +22,7 @@ type QueryRepository interface {
 
 type IndexerRepository interface {
 	Create(block domain.Block, txs []domain.Transaction, events []domain.Event) error
+	BulkCreate(items []domain.BlockTxsEvents) error
 	Delete(blockId int) error
 	GetBackfillCursor() (uint64, error)
 	UpdateBackfillCursor(blockId uint64) error

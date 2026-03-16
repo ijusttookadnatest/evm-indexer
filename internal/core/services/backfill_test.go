@@ -39,6 +39,11 @@ func (m *mockIndexerRepo) Delete(_ int) error {
 
 func (m *mockIndexerRepo) ResetBackfillCursor() error { return nil }
 
+func (m *mockIndexerRepo) BulkCreate(items []domain.BlockTxsEvents) error {
+	m.createCalls += len(items)
+	return m.createErr
+}
+
 type mockBackfiller struct {
 	lastBlockId    uint64
 	lastBlockIdErr error

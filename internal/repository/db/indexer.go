@@ -2,6 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"log/slog"
+	"time"
+
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 
 	"github.com/lib/pq"
@@ -64,6 +67,129 @@ func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transacti
 	}
 
 	tx.Commit()
+	return nil
+}
+
+func (repo *IndexerRepository) BulkCreate(items []domain.BlockTxsEvents) error {
+	start := time.Now()
+	sqlTx, err := repo.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer sqlTx.Rollback()
+
+	blockHashes := make([]string, len(items))
+	blockIds := make([]uint64, len(items))
+	parentHashes := make([]string, len(items))
+	gasLimits := make([]uint64, len(items))
+	gasUseds := make([]uint64, len(items))
+	miners := make([]string, len(items))
+	timestamps := make([]uint64, len(items))
+	for i, item := range items {
+		blockHashes[i] = item.Block.Hash
+		blockIds[i] = item.Block.Id
+		parentHashes[i] = item.Block.ParentHash
+		gasLimits[i] = item.Block.GasLimit
+		gasUseds[i] = item.Block.GasUsed
+		miners[i] = item.Block.Miner
+		timestamps[i] = item.Block.Timestamp
+	}
+	_, err = sqlTx.Exec(`
+		INSERT INTO blocks(block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp)
+		SELECT * FROM UNNEST($1::text[], $2::bigint[], $3::text[], $4::bigint[], $5::bigint[], $6::text[], $7::bigint[])
+		ON CONFLICT (block_hash) DO NOTHING;
+	`, pq.Array(blockHashes), pq.Array(blockIds), pq.Array(parentHashes),
+		pq.Array(gasLimits), pq.Array(gasUseds), pq.Array(miners), pq.Array(timestamps))
+	if err != nil {
+		return err
+	}
+
+	var flatTxs []domain.Transaction
+	for _, item := range items {
+		flatTxs = append(flatTxs, item.Txs...)
+	}
+	if len(flatTxs) > 0 {
+		txBlockIds := make([]uint64, len(flatTxs))
+		txHashes := make([]string, len(flatTxs))
+		txFroms := make([]string, len(flatTxs))
+		txTos := make([]*string, len(flatTxs))
+		txGasUseds := make([]uint64, len(flatTxs))
+		for i, t := range flatTxs {
+			txBlockIds[i] = t.BlockId
+			txHashes[i] = t.Hash
+			txFroms[i] = t.From
+			txTos[i] = t.To
+			txGasUseds[i] = t.GasUsed
+		}
+		_, err = sqlTx.Exec(`
+			INSERT INTO transactions(block_id, tx_hash, from_addr, to_addr, gas_used)
+			SELECT * FROM UNNEST($1::bigint[], $2::text[], $3::text[], $4::text[], $5::bigint[])
+			ON CONFLICT (tx_hash) DO NOTHING;
+		`, pq.Array(txBlockIds), pq.Array(txHashes), pq.Array(txFroms), pq.Array(txTos), pq.Array(txGasUseds))
+		if err != nil {
+			return err
+		}
+	}
+
+	var flatEvents []domain.Event
+	for _, item := range items {
+		flatEvents = append(flatEvents, item.Events...)
+	}
+	if len(flatEvents) > 0 {
+		evBlockIds := make([]uint64, len(flatEvents))
+		evLogIndexes := make([]uint64, len(flatEvents))
+		evTxHashes := make([]string, len(flatEvents))
+		evEmitters := make([]string, len(flatEvents))
+		evDatas := make([]string, len(flatEvents))
+		evTopics := make([]string, len(flatEvents))
+		for i, e := range flatEvents {
+			evBlockIds[i] = e.BlockId
+			evLogIndexes[i] = e.LogIndex
+			evTxHashes[i] = e.TxHash
+			evEmitters[i] = e.Emitter
+			evDatas[i] = e.Datas
+			val, err := pq.Array(e.Topics).Value()
+			if err != nil {
+				return err
+			}
+			switch v := val.(type) {
+			case []byte:
+				evTopics[i] = string(v)
+			case string:
+				evTopics[i] = v
+			default:
+				evTopics[i] = "{}"
+			}
+		}
+		_, err = sqlTx.Exec(`
+			INSERT INTO events(block_id, log_index, tx_hash, emitter, datas, topics)
+			SELECT block_id, log_index, tx_hash, emitter, datas, topics::text[]
+			FROM UNNEST($1::bigint[], $2::bigint[], $3::text[], $4::text[], $5::text[], $6::text[])
+			AS t(block_id, log_index, tx_hash, emitter, datas, topics)
+			ON CONFLICT (tx_hash, log_index) DO NOTHING;
+		`, pq.Array(evBlockIds), pq.Array(evLogIndexes), pq.Array(evTxHashes),
+			pq.Array(evEmitters), pq.Array(evDatas), pq.Array(evTopics))
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := sqlTx.Commit(); err != nil {
+		return err
+	}
+
+	totalTxs := 0
+	totalEvents := 0
+	for _, item := range items {
+		totalTxs += len(item.Txs)
+		totalEvents += len(item.Events)
+	}
+	slog.Info("BulkCreate done",
+		"blocks", len(items),
+		"txs", totalTxs,
+		"events", totalEvents,
+		"duration", time.Since(start),
+	)
 	return nil
 }
 

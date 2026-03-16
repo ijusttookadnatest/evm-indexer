@@ -56,15 +56,14 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 			return err
 		}
 
-		for _, data := range results {
-			if err := service.repo.Create(data.Block, data.Txs, data.Events); err != nil {
-				slog.Error("backfill: save failed", "blockId", data.Block.Id, "err", err)
-				return err
-			}
-			if err := service.repo.UpdateBackfillCursor(end); err != nil {
-				return err
-			}
+		if err := service.repo.BulkCreate(results); err != nil {
+			slog.Error("backfill: results save failed")
+			return err
 		}
+		if err := service.repo.UpdateBackfillCursor(end); err != nil {
+			return err
+		}
+
 		slog.Info("backfill: progress", "curr", end, "targetId", targetId, "remaining", targetId-end)
 		curr = end + 1
 	}
