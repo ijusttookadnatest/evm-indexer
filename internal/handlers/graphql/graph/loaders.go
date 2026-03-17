@@ -31,15 +31,14 @@ func (r *transactionsReader) getBatchTransactions(ctx context.Context, blockIDs 
 		return handleError[[]*dto.Transaction](len(blockIDs), err)
 	}
 
-	i := 0
 	result := make([]*dataloader.Result[[]*dto.Transaction], len(blockIDs))
-	for _, val := range mTxs {
-		txsPerBlockID := make([]*dto.Transaction, len(val))
-		for j, tx := range val {
+	for i, id := range blockIDs {
+		txs := mTxs[id]
+		txsPerBlockID := make([]*dto.Transaction, len(txs))
+		for j, tx := range txs {
 			txsPerBlockID[j] = toTransactionDTO(tx)
 		}
 		result[i] = &dataloader.Result[[]*dto.Transaction]{Data: txsPerBlockID}
-		i++
 	}
 	return result
 }
@@ -54,15 +53,14 @@ func (r *eventsReader) getBatchEvents(ctx context.Context, txHashs []string) []*
 		return handleError[[]*dto.Event](len(txHashs), err)
 	}
 
-	i := 0
 	result := make([]*dataloader.Result[[]*dto.Event], len(txHashs))
-	for _, val := range mEvents {
-		eventsByTxHash := make([]*dto.Event, len(val))
-		for j, tx := range val {
-			eventsByTxHash[j] = toEventDTO(tx)
+	for i, tx := range txHashs {
+		events := mEvents[tx]
+		eventsByTxHash := make([]*dto.Event, len(events))
+		for j, e := range events {
+			eventsByTxHash[j] = toEventDTO(e)
 		}
 		result[i] = &dataloader.Result[[]*dto.Event]{Data: eventsByTxHash}
-		i++
 	}
 	return result
 }
