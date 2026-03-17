@@ -22,11 +22,11 @@ type SubscriptionFilter struct {
 type Entity struct {
    clientsChan map[SubscriptionFilter][]chan[]byte
    mu          *sync.RWMutex
-   incoming    chan any
+   incoming    <-chan []byte
    name        string
 }
 
-func newEntity(name string, c chan any) *Entity {
+func newEntity(name string, c <-chan []byte) *Entity {
 	return &Entity{
 		clientsChan: make(map[SubscriptionFilter][]chan[]byte),
 		mu:          &sync.RWMutex{},
@@ -41,20 +41,15 @@ func (entity Entity) broadcast(ctx context.Context) {
 		case <-ctx.Done(): {
 			return 
 		}
-		case data := <- entity.incoming: {
-			payload, err := json.Marshal(data)
-			if err != nil {
-				slog.Error("broadcast: marshal failed", "err", err)
-				  continue
-			}
+		case payload := <- entity.incoming: {
 			var filteredPayload = new(PayloadFilter)
 			
-			err = json.Unmarshal(payload, &filteredPayload)
+			err := json.Unmarshal(payload, &filteredPayload)
 			if err != nil {
 				slog.Error("broadcast: unmarshal failed", "err", err)
 				  continue
 			}
-			bytes, _ := marshalWSMessage(entity.name, data)
+			bytes, _ := marshalWSMessage(entity.name, json.RawMessage(payload))
 			entity.mu.RLock()
 			for filter, clientsChan := range entity.clientsChan {
 				if matchesFilter(filter, *filteredPayload) {

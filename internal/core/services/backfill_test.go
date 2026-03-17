@@ -8,6 +8,13 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
+type mockPubSub struct{}
+
+func (m *mockPubSub) Publish(_ context.Context, _ string, _ []byte) error { return nil }
+func (m *mockPubSub) Subscribe(_ context.Context, _ string) (<-chan []byte, error) {
+	return make(chan []byte), nil
+}
+
 type mockIndexerRepo struct {
 	cursor        uint64
 	cursorErr     error
@@ -152,7 +159,7 @@ func TestBackfill(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewIndexerService(tt.repo, tt.backfiller, domain.IndexerStreams{})
+			svc := NewIndexerService(tt.repo, tt.backfiller, &mockPubSub{})
 			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2)
 			if tt.wantErr {
 				if err == nil {

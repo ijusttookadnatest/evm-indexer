@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 // A subscriber with an empty filter will receive nil — this test documents that.
 // Correct behavior: skip the iteration and log/return the error.
 func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
-	incoming := make(chan any, 1)
+	incoming := make(chan []byte, 1)
 	entity := newEntity("block", incoming)
 
 	clientChan := make(chan []byte, 1)
@@ -24,7 +25,7 @@ func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
 
 	go entity.broadcast(context.Background())
 
-	incoming <- make(chan int) // json.Marshal fails on channel types
+	incoming <- []byte("not json") // json.Unmarshal fails on invalid JSON
 
 	select {
 	case got := <-clientChan:
@@ -39,7 +40,7 @@ func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
 // HANDLED: broadcast uses select/default so a slow/blocked client does not
 // block the fan-out loop. The message is simply dropped for that client.
 func TestBroadcastSlowClientDropsMessage(t *testing.T) {
-	incoming := make(chan any, 1)
+	incoming := make(chan []byte, 1)
 	entity := newEntity("block", incoming)
 
 	// Simulate a slow client: buffered channel that is already full.
@@ -52,7 +53,8 @@ func TestBroadcastSlowClientDropsMessage(t *testing.T) {
 
 	go entity.broadcast(context.Background())
 
-	incoming <- domain.Block{Id: 1, Hash: "0xabc"}
+	b, _ := json.Marshal(domain.Block{Id: 1, Hash: "0xabc"})
+	incoming <- b
 	time.Sleep(100 * time.Millisecond)
 
 	// Drain: should only contain the original "already full" sentinel, not the broadcast.
@@ -111,7 +113,7 @@ func TestBroadcast(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			incoming := make(chan any, 1)
+			incoming := make(chan []byte, 1)
 			entity := newEntity("block", incoming)
 
 			clientChan := make(chan []byte, 1)
@@ -121,7 +123,8 @@ func TestBroadcast(t *testing.T) {
 
 			go entity.broadcast(context.Background())
 
-			incoming <- tc.payload
+			b, _ := json.Marshal(tc.payload)
+			incoming <- b
 
 			select {
 			case got := <-clientChan:
@@ -129,7 +132,7 @@ func TestBroadcast(t *testing.T) {
 					t.Errorf("did not expect to receive, got: %s", got)
 					return
 				}
-				expected, _ := marshalWSMessage("block", tc.payload)
+				expected, _ := marshalWSMessage("block", json.RawMessage(b))
 				if string(got) != string(expected) {
 					t.Errorf("payload mismatch:\n got  %s\n want %s", got, expected)
 				}

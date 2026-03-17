@@ -16,9 +16,9 @@ import (
 
 func testEntities() map[string]*Entity {
 	return map[string]*Entity{
-		"blocks":       newEntity("blocks", make(chan any)),
-		"transactions": newEntity("transactions", make(chan any)),
-		"events":       newEntity("events", make(chan any)),
+		"blocks":       newEntity("blocks", make(chan []byte)),
+		"transactions": newEntity("transactions", make(chan []byte)),
+		"events":       newEntity("events", make(chan []byte)),
 	}
 }
 

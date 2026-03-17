@@ -110,7 +110,7 @@ func TestForwardfill(t *testing.T) {
 			onCreate := make(chan struct{}, 10)
 			repo := &mockFFRepo{createErr: tt.createErr, onCreate: onCreate}
 			fetcher := &mockFFFetcher{ids: tt.fetcherIds, subErr: tt.subErr, fetchErr: tt.fetchErr}
-			svc := NewIndexerService(repo, fetcher, domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)})
+			svc := NewIndexerService(repo, fetcher, &mockPubSub{})
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

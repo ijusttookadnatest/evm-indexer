@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 )
 
@@ -14,7 +13,7 @@ func TestRun(t *testing.T) {
 		name           string
 		repo           ports.IndexerRepository
 		fetcher        ports.Fetcher
-		indexerStreams domain.IndexerStreams
+		pubsub ports.RedisPubSub
 		from           uint64
 		wantErr        bool
 	}{
@@ -22,42 +21,42 @@ func TestRun(t *testing.T) {
 			name:           "GetLastBlockId error returns immediately",
 			repo:           &mockIndexerRepo{},
 			fetcher:        &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
-			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
+			pubsub: &mockPubSub{},
 			wantErr:        true,
 		},
 		{
 			name:           "GetBackfillCursor error propagates",
 			repo:           &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
 			fetcher:        &mockBackfiller{lastBlockId: 5},
-			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
+			pubsub: &mockPubSub{},
 			wantErr:        true,
 		},
 		{
 			name:           "FetchBlock error propagates",
 			repo:           &mockIndexerRepo{},
 			fetcher:        &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
-			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
+			pubsub: &mockPubSub{},
 			wantErr:        true,
 		},
 		{
 			name:           "repo.Create error propagates",
 			repo:           &mockIndexerRepo{createErr: errors.New("db write failed")},
 			fetcher:        &mockBackfiller{lastBlockId: 2},
-			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
+			pubsub: &mockPubSub{},
 			wantErr:        true,
 		},
 		{
 			name:           "Subscribe error propagates",
 			repo:           &mockIndexerRepo{},
 			fetcher:        &mockFFFetcher{subErr: errors.New("ws disconnected")},
-			indexerStreams: domain.IndexerStreams{Block: make(chan any, 10), Txs: make(chan any, 10), Events: make(chan any, 10)},
+			pubsub: &mockPubSub{},
 			wantErr:        true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewIndexerService(tt.repo, tt.fetcher, tt.indexerStreams)
+			svc := NewIndexerService(tt.repo, tt.fetcher, tt.pubsub)
 			err := svc.Run(context.Background(), tt.from, 1)
 			if tt.wantErr {
 				if err == nil {

@@ -13,6 +13,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
 	"github/ijusttookadnatest/evm-indexer/internal/fetcher"
+	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 
 	"golang.org/x/sync/errgroup"
@@ -38,7 +39,12 @@ func run(ctx context.Context, reindex bool) error {
 	if err := repository.RunUpMigrations(db) ; err != nil {
 		return err
 	}
+	redis, err := pubsub.New(cfg.RedisDSN)
+	if err != nil {
+		return err
+	}
 
+	pubsub := pubsub.NewRedisPubSub(redis)
 	indexerRepo := repository.NewIndexerRepository(db)
 
 	if reindex {
@@ -51,7 +57,7 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	indexerService := service.NewIndexerService(indexerRepo, fetcher, indexerStreams)
+	indexerService := service.NewIndexerService(indexerRepo, fetcher, pubsub)
 
 	g.Go(func() error {
 		return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)

@@ -9,12 +9,12 @@ import (
 	"syscall"
 
 	"github/ijusttookadnatest/evm-indexer/internal/config"
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
-	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/rest"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/ws"
+	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
+	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 	"github/ijusttookadnatest/evm-indexer/internal/server"
 
 	"golang.org/x/sync/errgroup"
@@ -27,11 +27,6 @@ func run(ctx context.Context) error {
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
-	indexerStreams := domain.IndexerStreams{
-		Block:  make(chan any, 10),
-		Txs:    make(chan any, 10),
-		Events: make(chan any, 10),
-	}
 
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
@@ -41,10 +36,19 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+	redis, err := pubsub.New(cfg.RedisDSN)
+	if err != nil {
+		return err
+	}
+
+	pubsub := pubsub.NewRedisPubSub(redis)
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
 	
-	wsHandler := ws.NewRouter(ctx, indexerStreams)
+	wsHandler, err := ws.NewRouter(ctx, pubsub)
+	if err != nil {
+		return err
+	}
 	restHandler := rest.NewRouter(queryService)
 	graphqHandler := graphql.NewRouter(queryService, cfg.PlaygroundEnabled)
 	server := server.NewHTTPServer(restHandler, wsHandler, graphqHandler, cfg.Port)

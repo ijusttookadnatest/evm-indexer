@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 
 	"golang.org/x/sync/errgroup"
@@ -11,11 +10,11 @@ import (
 type IndexerService struct {
 	repo           ports.IndexerRepository
 	fetcher        ports.Fetcher
-	indexerStreams domain.IndexerStreams
+	pubsub		   ports.RedisPubSub
 }
 
-func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, indexerStreams domain.IndexerStreams) *IndexerService {
-	return &IndexerService{repo: repo, fetcher: fetcher, indexerStreams: indexerStreams}
+func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub) *IndexerService {
+	return &IndexerService{repo: repo, fetcher: fetcher, pubsub:pubsub}
 }
 
 func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int) error {

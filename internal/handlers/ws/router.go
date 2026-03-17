@@ -2,7 +2,7 @@ package ws
 
 import (
 	"context"
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 	"log/slog"
 	"net/http"
 
@@ -52,11 +52,25 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func NewRouter(ctx context.Context, indexerStreams domain.IndexerStreams) http.Handler {
+func NewRouter(ctx context.Context, pubsub ports.RedisPubSub) (http.Handler,error) {
+	blockIncoming, err := pubsub.Subscribe(ctx, "block")
+	if err != nil {
+		return nil, err
+	}
+	txIncoming, err := pubsub.Subscribe(ctx, "transaction")
+	if err != nil {
+		return nil, err
+	}
+	eventIncoming, err := pubsub.Subscribe(ctx, "event")
+	if err != nil {
+		return nil, err
+	}
+	
 	entities := map[string]*Entity{
-		"blocks":       newEntity("block", indexerStreams.Block),
-		"transactions": newEntity("transaction", indexerStreams.Txs),
-		"events":       newEntity("event", indexerStreams.Events),
+
+		"blocks":       newEntity("block", blockIncoming),
+		"transactions": newEntity("transaction", txIncoming),
+		"events":       newEntity("event", eventIncoming),
 	}
 	handler := NewHandler(ctx, entities)
 
@@ -67,5 +81,5 @@ func NewRouter(ctx context.Context, indexerStreams domain.IndexerStreams) http.H
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler.entitySubscription)
 
-	return mux
+	return mux, nil
 }

@@ -8,22 +8,26 @@ import (
 	"testing"
 	"time"
 
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
-
 	"github.com/gorilla/websocket"
 )
+
+type mockRedisPubSub struct{}
+
+func (m *mockRedisPubSub) Publish(_ context.Context, _ string, _ []byte) error { return nil }
+func (m *mockRedisPubSub) Subscribe(_ context.Context, _ string) (<-chan []byte, error) {
+	return make(chan []byte), nil
+}
 
 // ── TestEntitySubscriptionReturnsErrorOnInvalidMessage ────────────────────────
 //
 // The server must respond with a {"type":"error","payload":{"message":"..."}}
 // frame when the client sends an invalid subscription message.
 func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
-	streams := domain.IndexerStreams{
-		Block:  make(chan any),
-		Txs:    make(chan any),
-		Events: make(chan any),
+	handler, err := NewRouter(context.Background(), &mockRedisPubSub{})
+	if err != nil {
+		t.Fatal(err)
 	}
-	srv := httptest.NewServer(NewRouter(context.Background(), streams))
+	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
@@ -58,13 +62,12 @@ func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
 // which closes the connection, causing ReadMessage to return an error and
 // unblocking the entitySubscription loop. The client should observe a close frame.
 func TestEntitySubscriptionClosedOnContextCancel(t *testing.T) {
-	streams := domain.IndexerStreams{
-		Block:  make(chan any),
-		Txs:    make(chan any),
-		Events: make(chan any),
-	}
 	ctx, cancel := context.WithCancel(context.Background())
-	srv := httptest.NewServer(NewRouter(ctx, streams))
+	handler, err := NewRouter(ctx, &mockRedisPubSub{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
