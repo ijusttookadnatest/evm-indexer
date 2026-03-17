@@ -78,8 +78,5 @@ func NewRouter(ctx context.Context, pubsub ports.RedisPubSub) (http.Handler,erro
 	go entities["transactions"].broadcast(ctx)
 	go entities["events"].broadcast(ctx)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler.entitySubscription)
-
-	return mux, nil
+	return http.HandlerFunc(handler.entitySubscription), nil
 }

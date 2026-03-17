@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	"github/ijusttookadnatest/evm-indexer/internal/config"
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
 	"github/ijusttookadnatest/evm-indexer/internal/fetcher"
 	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
@@ -26,11 +25,6 @@ func run(ctx context.Context, reindex bool) error {
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
-	indexerStreams := domain.IndexerStreams{
-		Block:  make(chan any, 10),
-		Txs:    make(chan any, 10),
-		Events: make(chan any, 10),
-	}
 
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
