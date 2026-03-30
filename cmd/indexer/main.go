@@ -12,6 +12,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/config"
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
 	"github/ijusttookadnatest/evm-indexer/internal/fetcher"
+	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
 	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 
@@ -38,6 +39,11 @@ func run(ctx context.Context, reindex bool) error {
 		return err
 	}
 
+	reg := prometheus.NewRegistry()
+	metrics := prometheus.NewIndexerMetrics(reg)
+	prometheusServer := prometheus.NewPrometheusServer(reg, "2112")
+	go prometheus.RunPrometheusServer(ctx, prometheusServer)
+
 	pubsub := pubsub.NewRedisPubSub(redis)
 	indexerRepo := repository.NewIndexerRepository(db)
 
@@ -51,7 +57,7 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	indexerService := service.NewIndexerService(indexerRepo, fetcher, pubsub)
+	indexerService := service.NewIndexerService(indexerRepo, fetcher, pubsub, metrics)
 
 	g.Go(func() error {
 		return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)
