@@ -9,16 +9,23 @@ import (
 	"testing"
 	"time"
 
+	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/gorilla/websocket"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+func newTestApiMetrics() *custprometheus.ApiMetrics {
+	return custprometheus.NewApiMetrics(prometheus.NewRegistry())
+}
+
 func testEntities() map[string]*Entity {
+	m := newTestApiMetrics()
 	return map[string]*Entity{
-		"blocks":       newEntity("blocks", make(chan []byte)),
-		"transactions": newEntity("transactions", make(chan []byte)),
-		"events":       newEntity("events", make(chan []byte)),
+		"blocks":       newEntity("blocks", make(chan []byte), m),
+		"transactions": newEntity("transactions", make(chan []byte), m),
+		"events":       newEntity("events", make(chan []byte), m),
 	}
 }
 

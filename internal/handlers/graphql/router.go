@@ -2,9 +2,11 @@ package graphql
 
 import (
 	"net/http"
+	"time"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph"
+	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -13,6 +15,29 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/vektah/gqlparser/v2/ast"
 )
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rr *responseRecorder) WriteHeader(code int) {
+	rr.status = code
+	rr.ResponseWriter.WriteHeader(code)
+}
+
+func metricsMiddleware(metrics *custprometheus.ApiMetrics, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rr := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rr, r)
+		metrics.GraphqlProcessedRequest.Inc()
+		metrics.DurationGraphqlProcessingRequest.Observe(time.Since(start).Seconds())
+		if rr.status >= 400 {
+			metrics.GraphqlError.Inc()
+		}
+	})
+}
 
 func NewHandler(service ports.QueryService) *handler.Server {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Service: service}}))
@@ -30,7 +55,7 @@ func NewHandler(service ports.QueryService) *handler.Server {
 	return srv
 }
 
-func NewRouter(service ports.QueryService, playgroundEnabled bool) http.Handler {
+func NewRouter(service ports.QueryService, playgroundEnabled bool, metrics *custprometheus.ApiMetrics) http.Handler {
 	mux := http.NewServeMux()
 	srv := NewHandler(service)
 
@@ -39,5 +64,5 @@ func NewRouter(service ports.QueryService, playgroundEnabled bool) http.Handler 
 	}
 	mux.Handle("/", graph.Middleware(service, srv))
 
-	return mux
+	return metricsMiddleware(metrics, mux)
 }

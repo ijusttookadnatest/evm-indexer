@@ -25,7 +25,7 @@ type IndexerMetrics struct {
 
 type ApiMetrics struct {
 	WsActiveConnection prometheus.Gauge
-	WsTotalBlockSent prometheus.Counter
+	WsTotalMessageSent prometheus.Counter
 	RestProcessedRequest prometheus.Counter
 	GraphqlProcessedRequest prometheus.Counter
 	RestError prometheus.Counter
@@ -90,9 +90,9 @@ func NewApiMetrics(reg prometheus.Registerer) *ApiMetrics {
 			Name: "api_ws_active_connections",
 			Help: "Current number of active WebSocket connections",
 		}),
-		WsTotalBlockSent: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "api_ws_blocks_sent_total",
-			Help: "Total number of blocks sent over WebSocket",
+		WsTotalMessageSent: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "api_ws_messages_sent_total",
+			Help: "Total number of messages sent over WebSocket",
 		}),
 		RestProcessedRequest: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name: "api_rest_requests_total",

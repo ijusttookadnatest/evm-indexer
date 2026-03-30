@@ -23,7 +23,7 @@ func (m *mockRedisPubSub) Subscribe(_ context.Context, _ string) (<-chan []byte,
 // The server must respond with a {"type":"error","payload":{"message":"..."}}
 // frame when the client sends an invalid subscription message.
 func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
-	handler, err := NewRouter(context.Background(), &mockRedisPubSub{})
+	handler, err := NewRouter(context.Background(), &mockRedisPubSub{}, newTestApiMetrics())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestEntitySubscriptionReturnsErrorOnInvalidMessage(t *testing.T) {
 // unblocking the entitySubscription loop. The client should observe a close frame.
 func TestEntitySubscriptionClosedOnContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	handler, err := NewRouter(ctx, &mockRedisPubSub{})
+	handler, err := NewRouter(ctx, &mockRedisPubSub{}, newTestApiMetrics())
 	if err != nil {
 		t.Fatal(err)
 	}

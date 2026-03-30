@@ -16,7 +16,7 @@ import (
 // Correct behavior: skip the iteration and log/return the error.
 func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
 	incoming := make(chan []byte, 1)
-	entity := newEntity("block", incoming)
+	entity := newEntity("block", incoming, newTestApiMetrics())
 
 	clientChan := make(chan []byte, 1)
 	entity.mu.Lock()
@@ -41,7 +41,7 @@ func TestBroadcastMarshalErrorSilentlyIgnored(t *testing.T) {
 // block the fan-out loop. The message is simply dropped for that client.
 func TestBroadcastSlowClientDropsMessage(t *testing.T) {
 	incoming := make(chan []byte, 1)
-	entity := newEntity("block", incoming)
+	entity := newEntity("block", incoming, newTestApiMetrics())
 
 	// Simulate a slow client: buffered channel that is already full.
 	// broadcast's select/default will drop the new message instead of blocking.
@@ -114,7 +114,7 @@ func TestBroadcast(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			incoming := make(chan []byte, 1)
-			entity := newEntity("block", incoming)
+			entity := newEntity("block", incoming, newTestApiMetrics())
 
 			clientChan := make(chan []byte, 1)
 			entity.mu.Lock()

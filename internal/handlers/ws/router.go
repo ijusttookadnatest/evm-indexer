@@ -2,20 +2,23 @@ package ws
 
 import (
 	"context"
-	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 	"log/slog"
 	"net/http"
+
+	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
+	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
 
 	"github.com/gorilla/websocket"
 )
 
 type Handler struct {
 	entities map[string]*Entity
-	ctx context.Context
+	ctx      context.Context
+	metrics  *custprometheus.ApiMetrics
 }
 
-func NewHandler(ctx context.Context, entities map[string]*Entity) *Handler {
-	return &Handler{ctx:ctx, entities: entities}
+func NewHandler(ctx context.Context, entities map[string]*Entity, metrics *custprometheus.ApiMetrics) *Handler {
+	return &Handler{ctx: ctx, entities: entities, metrics: metrics}
 }
 
 var upgrader = websocket.Upgrader{
@@ -31,6 +34,8 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer conn.Close()
+	handler.metrics.WsActiveConnection.Inc()
+	defer handler.metrics.WsActiveConnection.Dec()
 
 	client := newClient(conn, handler.entities)
 	go client.messageWriter(handler.ctx)
@@ -52,7 +57,7 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func NewRouter(ctx context.Context, pubsub ports.RedisPubSub) (http.Handler,error) {
+func NewRouter(ctx context.Context, pubsub ports.RedisPubSub, metrics *custprometheus.ApiMetrics) (http.Handler, error) {
 	blockIncoming, err := pubsub.Subscribe(ctx, "block")
 	if err != nil {
 		return nil, err
@@ -65,14 +70,13 @@ func NewRouter(ctx context.Context, pubsub ports.RedisPubSub) (http.Handler,erro
 	if err != nil {
 		return nil, err
 	}
-	
-	entities := map[string]*Entity{
 
-		"blocks":       newEntity("block", blockIncoming),
-		"transactions": newEntity("transaction", txIncoming),
-		"events":       newEntity("event", eventIncoming),
+	entities := map[string]*Entity{
+		"blocks":       newEntity("block", blockIncoming, metrics),
+		"transactions": newEntity("transaction", txIncoming, metrics),
+		"events":       newEntity("event", eventIncoming, metrics),
 	}
-	handler := NewHandler(ctx, entities)
+	handler := NewHandler(ctx, entities, metrics)
 
 	go entities["blocks"].broadcast(ctx)
 	go entities["transactions"].broadcast(ctx)
