@@ -6,7 +6,13 @@ import (
 	"testing"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+func newTestMetrics() *custprometheus.IndexerMetrics {
+	return custprometheus.NewIndexerMetrics(prometheus.NewRegistry())
+}
 
 type mockPubSub struct{}
 
@@ -159,7 +165,7 @@ func TestBackfill(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewIndexerService(tt.repo, tt.backfiller, &mockPubSub{})
+			svc := NewIndexerService(tt.repo, tt.backfiller, &mockPubSub{}, newTestMetrics())
 			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2)
 			if tt.wantErr {
 				if err == nil {

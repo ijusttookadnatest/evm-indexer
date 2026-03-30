@@ -63,6 +63,9 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 				slog.Error("forwardfill: failed to save block", "blockId", data.Block.Id, "err", err)
 				return err
 			}
+			
+			s.metrics.SyncedBlock.Add(1)
+			s.metrics.ForwardfillLastBlockId.Set(float64(data.Block.Id))
 			slog.Debug("forwardfill: block saved DB")
 		}
 		case err := <-errChan :{

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
+	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -11,10 +12,11 @@ type IndexerService struct {
 	repo           ports.IndexerRepository
 	fetcher        ports.Fetcher
 	pubsub		   ports.RedisPubSub
+	metrics 	   *prometheus.IndexerMetrics
 }
 
-func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub) *IndexerService {
-	return &IndexerService{repo: repo, fetcher: fetcher, pubsub:pubsub}
+func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub, metrics *prometheus.IndexerMetrics) *IndexerService {
+	return &IndexerService{repo:repo, fetcher:fetcher, pubsub:pubsub, metrics:metrics}
 }
 
 func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int) error {
@@ -23,7 +25,13 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 
 	g, ctx := errgroup.WithContext(parentCtx)
 	g.Go(func() error {
-		return i.forwardfill(ctx)
+		i.metrics.ForwardfillIsSyncing.Inc()
+		err := i.forwardfill(ctx)
+		if err != nil {
+			i.metrics.ForwardfillError.Inc()
+		}
+		i.metrics.ForwardfillIsSyncing.Dec()
+		return err
 	})
 	targetId, err := i.fetcher.GetLastBlockId()
 	if err != nil {
@@ -32,7 +40,13 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 		return err
 	}
 	g.Go(func() error {
-		return i.backfill(ctx, from, targetId, concurrencyF)
+		i.metrics.BackfillIsSyncing.Inc()
+		err := i.backfill(ctx, from, targetId, concurrencyF)
+		if err != nil {
+			i.metrics.BackfillError.Inc()
+		}
+		i.metrics.BackfillIsSyncing.Dec()
+		return err
 	})
 
 	return g.Wait()

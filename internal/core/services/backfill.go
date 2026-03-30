@@ -5,6 +5,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	"log/slog"
 	"runtime"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -38,15 +39,18 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 		results := make([]domain.BlockTxsEvents, size)
 
 		slog.Info("backfill: fetching batch", "from", curr, "to", end, "size", size)
+		processStart := time.Now()
 		g, gCtx := errgroup.WithContext(ctx)
 		for i := range size {
 			blockId := curr + uint64(i)
 			g.Go(func() error {
+				fetchStart := time.Now()
 				data, err := service.fetcher.FetchBlock(gCtx, blockId)
 				if err != nil {
 					slog.Error("backfill: fetch failed", "blockId", blockId, "err", err)
 					return err
 				}
+				service.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
 				results[i] = data
 				return nil
 			})
@@ -56,15 +60,21 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 			return err
 		}
 
+		writeStart := time.Now()
 		if err := service.repo.BulkCreate(results); err != nil {
 			slog.Error("backfill: results save failed")
 			return err
 		}
+		service.metrics.DurationWritingBlockDB.Observe(time.Since(writeStart).Seconds())
+		service.metrics.DurationProcessingBlock.Observe(time.Since(processStart).Seconds())
 		if err := service.repo.UpdateBackfillCursor(end); err != nil {
 			return err
 		}
 
+		service.metrics.BackfillLastBlockId.Set(float64(end))
+		service.metrics.SyncedBlock.Add(float64(len(results)))
 		slog.Info("backfill: progress", "curr", end, "targetId", targetId, "remaining", targetId-end)
+		
 		curr = end + 1
 	}
 
