@@ -51,12 +51,12 @@ func run(ctx context.Context) error {
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
 	
-	wsHandler, err := ws.NewRouter(ctx, pubsub)
+	wsHandler, err := ws.NewRouter(ctx, pubsub, metrics)
 	if err != nil {
 		return err
 	}
-	restHandler := rest.NewRouter(queryService)
-	graphqHandler := graphql.NewRouter(queryService, cfg.PlaygroundEnabled)
+	restHandler := rest.NewRouter(queryService, metrics)
+	graphqHandler := graphql.NewRouter(queryService, cfg.PlaygroundEnabled, metrics)
 	server := server.NewHTTPServer(restHandler, wsHandler, graphqHandler, cfg.Port)
 
 	g.Go(func() error {
