@@ -70,17 +70,23 @@ func NewRouter(ctx context.Context, pubsub ports.RedisPubSub, metrics *custprome
 	if err != nil {
 		return nil, err
 	}
+	reorgIncoming, err := pubsub.Subscribe(ctx, "reorg")
+	if err != nil {
+		return nil, err
+	}
 
 	entities := map[string]*Entity{
 		"blocks":       newEntity("block", blockIncoming, metrics),
 		"transactions": newEntity("transaction", txIncoming, metrics),
 		"events":       newEntity("event", eventIncoming, metrics),
+		"reorgs":       newEntity("reorg", reorgIncoming, metrics),
 	}
 	handler := NewHandler(ctx, entities, metrics)
 
 	go entities["blocks"].broadcast(ctx)
 	go entities["transactions"].broadcast(ctx)
 	go entities["events"].broadcast(ctx)
+	go entities["reorgs"].broadcast(ctx)
 
 	return http.HandlerFunc(handler.entitySubscription), nil
 }

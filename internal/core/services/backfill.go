@@ -82,12 +82,6 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 	return nil
 }
 
-func (service *IndexerService) Delete(blockId int) error {
-	if blockId <= 0 {
-		return domain.ErrInvalidId
-	}
-	if err := service.repo.Delete(blockId); err != nil {
-		return err
-	}
-	return nil
+func (service *IndexerService) Delete(blockId uint64) error {
+	return service.repo.Delete(blockId)
 }

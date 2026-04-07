@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -212,12 +214,24 @@ func (repo *IndexerRepository) ResetBackfillCursor() error {
 	return err
 }
 
-func (repo *IndexerRepository) Delete(blockId int) error {
-	_, err := repo.db.Exec(`
-		DELETE FROM blocks WHERE block_id = $1;
-	`, blockId)
-	if err != nil {
-		return err
-	}
-	return nil
+func (repo *IndexerRepository) Delete(blockId uint64) error {
+	_, err := repo.db.Exec(`DELETE FROM blocks WHERE block_id = $1;`, blockId)
+	return err
 }
+
+func (repo *IndexerRepository) GetBlockById(ctx context.Context, id uint64) (*domain.Block, error) {
+	row := repo.db.QueryRowContext(ctx, `
+		SELECT block_hash, block_id, parent_hash, gas_limit, gas_used, miner, block_timestamp
+		FROM blocks WHERE block_id = $1;
+	`, id)
+	var b domain.Block
+	err := row.Scan(&b.Hash, &b.Id, &b.ParentHash, &b.GasLimit, &b.GasUsed, &b.Miner, &b.Timestamp)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+

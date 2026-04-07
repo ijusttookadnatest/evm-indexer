@@ -20,7 +20,10 @@ type mockFFRepo struct {
 func (m *mockFFRepo) GetBackfillCursor() (uint64, error)  { return 0, nil }
 func (m *mockFFRepo) UpdateBackfillCursor(_ uint64) error { return nil }
 func (m *mockFFRepo) ResetBackfillCursor() error          { return nil }
-func (m *mockFFRepo) Delete(_ int) error                  { return nil }
+func (m *mockFFRepo) Delete(_ uint64) error                                              { return nil }
+func (m *mockFFRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Block, error) {
+	return nil, domain.ErrNotFound
+}
 func (m *mockFFRepo) BulkCreate(_ []domain.BlockTxsEvents) error { return nil }
 func (m *mockFFRepo) Create(_ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
 	m.createCalls++

@@ -1,5 +1,9 @@
 package domain
 
+type Reorg struct {
+	BlockId uint64 `json:"block_id"`
+}
+
 type Event struct {
     BlockId uint64
     TxHash string

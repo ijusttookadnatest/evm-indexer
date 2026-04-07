@@ -45,9 +45,13 @@ func (m *mockIndexerRepo) Create(_ domain.Block, _ []domain.Transaction, _ []dom
 	return m.createErr
 }
 
-func (m *mockIndexerRepo) Delete(_ int) error {
+func (m *mockIndexerRepo) Delete(_ uint64) error {
 	m.deleteCalls++
 	return m.deleteErr
+}
+
+func (m *mockIndexerRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Block, error) {
+	return nil, domain.ErrNotFound
 }
 
 func (m *mockIndexerRepo) ResetBackfillCursor() error { return nil }
