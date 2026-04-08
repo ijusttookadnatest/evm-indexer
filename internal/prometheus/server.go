@@ -14,8 +14,10 @@ type IndexerMetrics struct {
 	SyncedBlock prometheus.Counter
 	BackfillError   prometheus.Counter
 	ForwardfillError prometheus.Counter
+	BalancefillError prometheus.Counter
 	BackfillIsSyncing prometheus.Gauge
 	ForwardfillIsSyncing prometheus.Gauge
+	BalancefillIsSyncing prometheus.Gauge
 	BackfillLastBlockId prometheus.Gauge
 	ForwardfillLastBlockId prometheus.Gauge
 	DurationFetchingBlock prometheus.Histogram
@@ -48,6 +50,10 @@ func NewIndexerMetrics(reg prometheus.Registerer) *IndexerMetrics {
 			Name: "indexer_forwardfill_errors_total",
 			Help: "Total number of forwardfill errors",
 		}),
+		BalancefillError: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "indexer_balancefill_errors_total",
+			Help: "Total number of balancefill errors",
+		}),
 		BackfillIsSyncing: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "indexer_backfill_syncing",
 			Help: "1 if backfill is currently syncing, 0 otherwise",
@@ -55,6 +61,10 @@ func NewIndexerMetrics(reg prometheus.Registerer) *IndexerMetrics {
 		ForwardfillIsSyncing: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "indexer_forwardfill_syncing",
 			Help: "1 if forwardfill is currently syncing, 0 otherwise",
+		}),
+		BalancefillIsSyncing: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "indexer_balancefill_syncing",
+			Help: "1 if balancefill is currently syncing, 0 otherwise",
 		}),
 		BackfillLastBlockId: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "indexer_backfill_last_block_number",

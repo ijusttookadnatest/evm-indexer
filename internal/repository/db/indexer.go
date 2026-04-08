@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"math/big"
 	"time"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
@@ -235,3 +236,52 @@ func (repo *IndexerRepository) GetBlockById(ctx context.Context, id uint64) (*do
 	return &b, nil
 }
 
+func (repo *IndexerRepository) GetBalancefillCursor() (uint64, error) {
+	var id uint64
+	err := repo.db.QueryRow(`SELECT last_block_id FROM balancefill_cursor;`).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (repo *IndexerRepository) UpdateBalancefillCursor(blockId uint64) error {
+	_, err := repo.db.Exec(`UPDATE balancefill_cursor SET last_block_id = $1;`, blockId)
+	return err
+}
+
+func (repo *IndexerRepository) ResetBalancefillCursor() error {
+	_, err := repo.db.Exec(`UPDATE balancefill_cursor SET last_block_id = 0;`)
+	return err
+}
+
+func (repo *IndexerRepository) UpsertBalance(from, to, token, tokenId string, amount big.Int) error {
+	const zeroAddr = "0x0000000000000000000000000000000000000000"
+
+	sqlTx, err := repo.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer sqlTx.Rollback()
+
+	upsert := `
+		INSERT INTO wallet_balance (wallet_address, token_address, token_id, amount)
+		VALUES ($1, $2, $3, $4::numeric)
+		ON CONFLICT (wallet_address, token_address, token_id)
+		DO UPDATE SET amount = wallet_balance.amount + EXCLUDED.amount;`
+
+	if from != zeroAddr {
+		neg := new(big.Int).Neg(&amount)
+		if _, err = sqlTx.Exec(upsert, from, token, tokenId, neg.String()); err != nil {
+			return err
+		}
+	}
+
+	if to != zeroAddr {
+		if _, err = sqlTx.Exec(upsert, to, token, tokenId, amount.String()); err != nil {
+			return err
+		}
+	}
+
+	return sqlTx.Commit()
+}

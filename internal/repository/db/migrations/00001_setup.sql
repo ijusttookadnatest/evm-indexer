@@ -31,6 +31,14 @@ CREATE TABLE IF NOT EXISTS events (
     PRIMARY KEY(tx_hash, log_index)
 );
 
+CREATE TABLE IF NOT EXISTS wallet_balance (
+    wallet_address TEXT NOT NULL,
+    token_address  TEXT NOT NULL,
+    token_id       TEXT NOT NULL DEFAULT '',
+    amount         NUMERIC NOT NULL,
+    PRIMARY KEY (wallet_address, token_address, token_id)
+);
+
 CREATE INDEX idx_block_id ON blocks(block_id);
 CREATE INDEX idx_block_timestamp ON blocks(block_timestamp);
 
@@ -45,7 +53,12 @@ CREATE TABLE IF NOT EXISTS backfill_cursor (
     last_block_id BIGINT NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS balancefill_cursor (
+    last_block_id BIGINT NOT NULL DEFAULT 0
+);
+
 INSERT INTO backfill_cursor (last_block_id) VALUES (0);
+INSERT INTO balancefill_cursor (last_block_id) VALUES (0);
 
 -- +goose StatementEnd
 
@@ -61,8 +74,11 @@ DROP INDEX IF EXISTS idx_event_emitter;
 DROP INDEX IF EXISTS idx_event_gin_topics;
 
 DROP TABLE IF EXISTS backfill_cursor;
+DROP TABLE IF EXISTS balancefill_cursor;
+
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS blocks;
+DROP TABLE IF EXISTS wallet_balance;
 
 -- +goose StatementEnd

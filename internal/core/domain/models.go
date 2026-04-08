@@ -1,5 +1,7 @@
 package domain
 
+import "math/big"
+
 type Reorg struct {
 	BlockId uint64 `json:"block_id"`
 }
@@ -60,4 +62,11 @@ type EventFilter struct {
     FromBlock  *uint64
     ToBlock *uint64
     Limit *int
+}
+
+type WalletBalance struct {
+    WalletAddress string
+    TokenAddress  string
+    TokenId       string // "" for ERC20, tokenId hex for ERC721/1155
+    Amount        *big.Int
 }

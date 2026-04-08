@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"math/big"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
@@ -28,4 +29,8 @@ type IndexerRepository interface {
 	GetBackfillCursor() (uint64, error)
 	UpdateBackfillCursor(blockId uint64) error
 	ResetBackfillCursor() error
+	GetBalancefillCursor() (uint64, error)
+	UpdateBalancefillCursor(blockId uint64) error
+	ResetBalancefillCursor() error
+	UpsertBalance(from, to, token, tokenId string, amount big.Int) error
 }
