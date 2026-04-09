@@ -254,7 +254,7 @@ func (repo *IndexerRepository) ResetBalancefillCursor() error {
 	return err
 }
 
-func (repo *IndexerRepository) BatchUpsertBalance(entries []domain.BalanceEntry) error {
+func (repo *IndexerRepository) BatchUpsertBalance(ctx context.Context, entries []domain.BalanceEntry) error {
 	var walletAddress, tokenAddress, tokenId, amount []string
 	for _, entry := range entries {
 		walletAddress = append(walletAddress, entry.WalletAddress)
@@ -275,9 +275,28 @@ func (repo *IndexerRepository) BatchUpsertBalance(entries []domain.BalanceEntry)
 		ON CONFLICT (wallet_address, token_address, token_id)
 		DO UPDATE SET amount = wallet_balance.amount + EXCLUDED.amount;`
 
-	if _, err := sqlTx.Exec(batchUpsert, pq.Array(walletAddress), pq.Array(tokenAddress), pq.Array(tokenId), pq.Array(amount)); err != nil {
+	if _, err := sqlTx.ExecContext(ctx, batchUpsert, pq.Array(walletAddress), pq.Array(tokenAddress), pq.Array(tokenId), pq.Array(amount)); err != nil {
 		return err
 	}
 
 	return sqlTx.Commit()
+}
+
+func (repo *IndexerRepository) GetMaxIndexedBlock(ctx context.Context) (uint64, error) {
+	var maxId uint64
+	err := repo.db.QueryRowContext(ctx, `SELECT COALESCE(MAX(id), 0) FROM blocks;`).Scan(&maxId)
+	return maxId, err
+}
+
+func (repo *IndexerRepository) GetLogsByTopic(ctx context.Context, filter domain.LogFilter) ([]domain.Log, error) {
+	rows, err := repo.db.QueryContext(ctx, `
+		SELECT id, emitter, datas, topics
+		FROM events
+		WHERE topics[1] = ANY($1) AND id >= $2
+		LIMIT $3;`, pq.Array(filter.Topics), filter.From, filter.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return fetchLogs(rows)
 }

@@ -2,7 +2,6 @@ package ports
 
 import (
 	"context"
-	"math/big"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
@@ -26,11 +25,13 @@ type IndexerRepository interface {
 	BulkCreate(items []domain.BlockTxsEvents) error
 	Delete(blockId uint64) error
 	GetBlockById(ctx context.Context, id uint64) (*domain.Block, error)
+	GetMaxIndexedBlock(ctx context.Context) (uint64, error)
 	GetBackfillCursor() (uint64, error)
 	UpdateBackfillCursor(blockId uint64) error
 	ResetBackfillCursor() error
 	GetBalancefillCursor() (uint64, error)
 	UpdateBalancefillCursor(blockId uint64) error
 	ResetBalancefillCursor() error
-	UpsertBalance(from, to, token, tokenId string, amount big.Int) error
+	BatchUpsertBalance(ctx context.Context, entries []domain.BalanceEntry) error
+	GetLogsByTopic(ctx context.Context, filter domain.LogFilter) ([]domain.Log, error)
 }

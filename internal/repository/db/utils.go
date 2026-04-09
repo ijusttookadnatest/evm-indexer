@@ -77,6 +77,22 @@ func fetchEvents(rows *sql.Rows) ([]domain.Event, error) {
 	return events, nil
 }
 
+func fetchLogs(rows *sql.Rows) ([]domain.Log, error) {
+	events := []domain.Log{}
+	for rows.Next() {
+		event, err := scanLog(rows)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, *event)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	return events, nil
+}
+
 func scanBlock(row *sql.Rows) (*domain.Block, error) {
 	block := new(domain.Block)
 	err := row.Scan(
@@ -115,6 +131,19 @@ func scanEvent(row *sql.Rows) (*domain.Event, error) {
 		&event.BlockId,
 		&event.LogIndex,
 		&event.TxHash,
+		&event.Emitter,
+		&event.Datas,
+		pq.Array(&event.Topics),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+func scanLog(row *sql.Rows) (*domain.Log, error) {
+	event := new(domain.Log)
+	err := row.Scan(
 		&event.Emitter,
 		&event.Datas,
 		pq.Array(&event.Topics),

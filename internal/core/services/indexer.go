@@ -49,5 +49,15 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 		return err
 	})
 
+	g.Go(func() error {
+		i.metrics.BalancefillIsSyncing.Inc()
+		err := i.balancefill(ctx, 1000, 96)
+		if err != nil {
+			i.metrics.BalancefillError.Inc()
+		}
+		i.metrics.BalancefillIsSyncing.Dec()
+		return err
+	})
+	
 	return g.Wait()
 }

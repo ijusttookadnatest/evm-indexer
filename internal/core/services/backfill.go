@@ -10,8 +10,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (service *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int) error {
-	cursor, err := service.repo.GetBackfillCursor()
+func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int) error {
+	cursor, err := s.repo.GetBackfillCursor()
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,12 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 			blockId := curr + uint64(i)
 			g.Go(func() error {
 				fetchStart := time.Now()
-				data, err := service.fetcher.FetchBlock(gCtx, blockId)
+				data, err := s.fetcher.FetchBlock(gCtx, blockId)
 				if err != nil {
 					slog.Error("backfill: fetch failed", "blockId", blockId, "err", err)
 					return err
 				}
-				service.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
+				s.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
 				results[i] = data
 				return nil
 			})
@@ -61,18 +61,18 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 		}
 
 		writeStart := time.Now()
-		if err := service.repo.BulkCreate(results); err != nil {
+		if err := s.repo.BulkCreate(results); err != nil {
 			slog.Error("backfill: results save failed")
 			return err
 		}
-		service.metrics.DurationWritingBlockDB.Observe(time.Since(writeStart).Seconds())
-		service.metrics.DurationProcessingBlock.Observe(time.Since(processStart).Seconds())
-		if err := service.repo.UpdateBackfillCursor(end); err != nil {
+		s.metrics.DurationWritingBlockDB.Observe(time.Since(writeStart).Seconds())
+		s.metrics.DurationProcessingBlock.Observe(time.Since(processStart).Seconds())
+		if err := s.repo.UpdateBackfillCursor(end); err != nil {
 			return err
 		}
 
-		service.metrics.BackfillLastBlockId.Set(float64(end))
-		service.metrics.SyncedBlock.Add(float64(len(results)))
+		s.metrics.BackfillLastBlockId.Set(float64(end))
+		s.metrics.SyncedBlock.Add(float64(len(results)))
 		slog.Info("backfill: progress", "curr", end, "targetId", targetId, "remaining", targetId-end)
 		
 		curr = end + 1
@@ -80,8 +80,4 @@ func (service *IndexerService) backfill(ctx context.Context, from uint64, target
 
 	slog.Info("backfill: completed successfully", "lastIndexed", targetId)
 	return nil
-}
-
-func (service *IndexerService) Delete(blockId uint64) error {
-	return service.repo.Delete(blockId)
 }
