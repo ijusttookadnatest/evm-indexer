@@ -48,7 +48,7 @@ func run(ctx context.Context, reindex bool) error {
 	indexerRepo := repository.NewIndexerRepository(db)
 
 	if reindex {
-		if err := indexerRepo.ResetBackfillCursor(); err != nil {
+		if err := indexerRepo.ResetBackfillCursor(ctx); err != nil {
 			return err
 		}
 	}

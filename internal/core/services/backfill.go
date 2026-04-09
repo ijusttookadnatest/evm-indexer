@@ -11,7 +11,7 @@ import (
 )
 
 func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int) error {
-	cursor, err := s.repo.GetBackfillCursor()
+	cursor, err := s.repo.GetBackfillCursor(ctx)
 	if err != nil {
 		return err
 	}
@@ -61,13 +61,13 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 		}
 
 		writeStart := time.Now()
-		if err := s.repo.BulkCreate(results); err != nil {
+		if err := s.repo.BulkCreate(ctx, results); err != nil {
 			slog.Error("backfill: results save failed")
 			return err
 		}
 		s.metrics.DurationWritingBlockDB.Observe(time.Since(writeStart).Seconds())
 		s.metrics.DurationProcessingBlock.Observe(time.Since(processStart).Seconds())
-		if err := s.repo.UpdateBackfillCursor(end); err != nil {
+		if err := s.repo.UpdateBackfillCursor(ctx, end); err != nil {
 			return err
 		}
 

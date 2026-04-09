@@ -33,7 +33,7 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 			}
 			if curr != nil && (curr.Hash != from.Block.Hash) {
 				slog.Info("forwardfill: reorg detected", "blockId", from.Block.Id)
-				if err := s.repo.Delete(from.Block.Id); err != nil {
+				if err := s.repo.Delete(ctx, from.Block.Id); err != nil {
 					slog.Error("forwardfill: failed to delete block during reorg", "blockId", from.Block.Id, "err", err)
 					return err
 				}
@@ -47,7 +47,7 @@ func (s *IndexerService) forwardfill(ctx context.Context) error {
 					return err
 				}
 			}
-			err = s.repo.Create(from.Block, from.Txs, from.Events)
+			err = s.repo.Create(ctx, from.Block, from.Txs, from.Events)
 			if err != nil {
 				slog.Error("forwardfill: failed to save block", "blockId", from.Block.Id, "err", err)
 				return err

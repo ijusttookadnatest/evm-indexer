@@ -21,17 +21,17 @@ type QueryRepository interface {
 }
 
 type IndexerRepository interface {
-	Create(block domain.Block, txs []domain.Transaction, events []domain.Event) error
-	BulkCreate(items []domain.BlockTxsEvents) error
-	Delete(blockId uint64) error
+	Create(ctx context.Context, block domain.Block, txs []domain.Transaction, events []domain.Event) error
+	BulkCreate(ctx context.Context, items []domain.BlockTxsEvents) error
+	Delete(ctx context.Context, blockId uint64) error
 	GetBlockById(ctx context.Context, id uint64) (*domain.Block, error)
 	GetMaxIndexedBlock(ctx context.Context) (uint64, error)
-	GetBackfillCursor() (uint64, error)
-	UpdateBackfillCursor(blockId uint64) error
-	ResetBackfillCursor() error
-	GetBalancefillCursor() (uint64, error)
-	UpdateBalancefillCursor(blockId uint64) error
-	ResetBalancefillCursor() error
+	GetBackfillCursor(ctx context.Context) (uint64, error)
+	UpdateBackfillCursor(ctx context.Context, blockId uint64) error
+	ResetBackfillCursor(ctx context.Context) error
+	GetBalancefillCursor(ctx context.Context) (uint64, error)
+	UpdateBalancefillCursor(ctx context.Context, blockId uint64) error
+	ResetBalancefillCursor(ctx context.Context) error
 	BatchUpsertBalance(ctx context.Context, entries []domain.BalanceEntry) error
 	GetLogsByTopic(ctx context.Context, filter domain.LogFilter) ([]domain.Log, error)
 }

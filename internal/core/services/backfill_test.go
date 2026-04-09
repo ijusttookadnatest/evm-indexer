@@ -31,21 +31,21 @@ type mockIndexerRepo struct {
 	deleteCalls   int
 }
 
-func (m *mockIndexerRepo) GetBackfillCursor() (uint64, error) {
+func (m *mockIndexerRepo) GetBackfillCursor(_ context.Context) (uint64, error) {
 	return m.cursor, m.cursorErr
 }
 
-func (m *mockIndexerRepo) UpdateBackfillCursor(id uint64) error {
+func (m *mockIndexerRepo) UpdateBackfillCursor(_ context.Context, id uint64) error {
 	m.updatedCursor = id
 	return nil
 }
 
-func (m *mockIndexerRepo) Create(_ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
+func (m *mockIndexerRepo) Create(_ context.Context, _ domain.Block, _ []domain.Transaction, _ []domain.Event) error {
 	m.createCalls++
 	return m.createErr
 }
 
-func (m *mockIndexerRepo) Delete(_ uint64) error {
+func (m *mockIndexerRepo) Delete(_ context.Context, _ uint64) error {
 	m.deleteCalls++
 	return m.deleteErr
 }
@@ -54,17 +54,17 @@ func (m *mockIndexerRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Blo
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockIndexerRepo) ResetBackfillCursor() error                                        { return nil }
-func (m *mockIndexerRepo) GetBalancefillCursor() (uint64, error)                             { return 0, nil }
-func (m *mockIndexerRepo) UpdateBalancefillCursor(_ uint64) error                            { return nil }
-func (m *mockIndexerRepo) ResetBalancefillCursor() error                                     { return nil }
+func (m *mockIndexerRepo) ResetBackfillCursor(_ context.Context) error                                        { return nil }
+func (m *mockIndexerRepo) GetBalancefillCursor(_ context.Context) (uint64, error)                             { return 0, nil }
+func (m *mockIndexerRepo) UpdateBalancefillCursor(_ context.Context, _ uint64) error                          { return nil }
+func (m *mockIndexerRepo) ResetBalancefillCursor(_ context.Context) error                                     { return nil }
 func (m *mockIndexerRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)              { return 0, nil }
 func (m *mockIndexerRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error { return nil }
 func (m *mockIndexerRepo) GetLogsByTopic(_ context.Context, _ domain.LogFilter) ([]domain.Log, error) {
 	return nil, nil
 }
 
-func (m *mockIndexerRepo) BulkCreate(items []domain.BlockTxsEvents) error {
+func (m *mockIndexerRepo) BulkCreate(_ context.Context, items []domain.BlockTxsEvents) error {
 	m.createCalls += len(items)
 	return m.createErr
 }

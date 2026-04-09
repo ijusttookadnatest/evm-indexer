@@ -98,53 +98,66 @@ var transferSignatures = []string{
 }
 
 func (s *IndexerService) balancefill(ctx context.Context, batchSize uint64, lagFinalized int) error {
-	cursor, err := s.repo.GetBalancefillCursor()
+	cursor, err := s.repo.GetBalancefillCursor(ctx)
 	if err != nil {
 		return err
 	}
 	
 	for {
-		var balanceEntries []domain.BalanceEntry
-
-		maxBlock, err := s.repo.GetMaxIndexedBlock(ctx)
-		if err != nil {
-			return err
+		select {
+		case <-ctx.Done(): {
+			slog.Error("balancefill: context CANCELLED", "Reason", ctx.Err())
+			return ctx.Err()
 		}
-		if cursor >= maxBlock - uint64(lagFinalized) {
-			time.Sleep(BlockTimeValidation)
-			continue
+		default: {
+			var balanceEntries []domain.BalanceEntry
+	
+			maxBlock, err := s.repo.GetMaxIndexedBlock(ctx)
+			if err != nil {
+				return err
+			}
+			if cursor >= maxBlock - uint64(lagFinalized) {
+				select {                                                                         
+				case <-time.After(BlockTimeValidation):
+				case <-ctx.Done(): {
+					slog.Error("balancefill: context CANCELLED", "Reason", ctx.Err())                                                               
+					return ctx.Err()
+				}
+				}
+				continue
+			}
+			
+			events, err := s.repo.GetLogsByTopic(ctx, domain.LogFilter{
+				Topics: transferSignatures,
+				From:   cursor,
+				Limit:  batchSize,
+			})
+			if err != nil {
+				slog.Error("balancefill: failed to read batch logs", "cursor", cursor, "err", err)
+				return err
+			}
+			slog.Debug("balancefill: logs fetched", "cursor", cursor)
+			if len(events) == 0 {
+				continue
+			}
+	
+			for _, event := range events {
+				balanceEntries = append(balanceEntries, extractBalanceEntriesFromLog(event)...)
+			}
+	
+			err = s.repo.BatchUpsertBalance(ctx, balanceEntries)
+			if err != nil {
+				slog.Error("balancefill: failed to batch upsert balance update", "cursor", cursor, "err", err)
+				return err
+			}
+	
+			cursor = events[len(events) - 1].Id
+			err = s.repo.UpdateBalancefillCursor(ctx, cursor)
+			if err != nil {
+				slog.Error("balancefill: failed to update balancefill cursor", "cursor", cursor, "err", err)
+				return err
+			}
 		}
-		
-		events, err := s.repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: transferSignatures,
-			From:   cursor,
-			Limit:  batchSize,
-		})
-		if err != nil {
-			slog.Error("balancefill: failed to read batch logs", "cursor", cursor, "err", err)
-			return err
-		}
-		slog.Debug("balancefill: logs fetched", "cursor", cursor)
-		if len(events) == 0 {
-			time.Sleep(BlockTimeValidation)
-			continue
-		}
-
-		for _, event := range events {
-			balanceEntries = append(balanceEntries, extractBalanceEntriesFromLog(event)...)
-		}
-
-		err = s.repo.BatchUpsertBalance(ctx, balanceEntries)
-		if err != nil {
-			slog.Error("balancefill: failed to batch upsert balance update", "cursor", cursor, "err", err)
-			return err
-		}
-
-		cursor = events[len(events) - 1].Id
-		err = s.repo.UpdateBalancefillCursor(cursor)
-		if err != nil {
-			slog.Error("balancefill: failed to update balancefill cursor", "cursor", cursor, "err", err)
-			return err
 		}
 	}
 }
