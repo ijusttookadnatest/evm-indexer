@@ -24,6 +24,8 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	defer cancel()
 
 	g, ctx := errgroup.WithContext(parentCtx)
+	backfillChan := make(chan struct{}, 1)
+
 	g.Go(func() error {
 		i.metrics.ForwardfillIsSyncing.Inc()
 		err := i.forwardfill(ctx)
@@ -41,7 +43,7 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	}
 	g.Go(func() error {
 		i.metrics.BackfillIsSyncing.Inc()
-		err := i.backfill(ctx, from, targetId, concurrencyF)
+		err := i.backfill(ctx, from, targetId, concurrencyF, backfillChan)
 		if err != nil {
 			i.metrics.BackfillError.Inc()
 		}
@@ -50,13 +52,18 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	})
 
 	g.Go(func() error {
-		i.metrics.BalancefillIsSyncing.Inc()
-		err := i.balancefill(ctx, 1000, 96)
-		if err != nil {
-			i.metrics.BalancefillError.Inc()
+		select {
+		case <-backfillChan: {
+			i.metrics.BalancefillIsSyncing.Inc()
+			err := i.balancefill(ctx, 1000, 96)
+			if err != nil {
+				i.metrics.BalancefillError.Inc()
+			}
+			i.metrics.BalancefillIsSyncing.Dec()
+			return err
 		}
-		i.metrics.BalancefillIsSyncing.Dec()
-		return err
+		case <-ctx.Done(): return ctx.Err()
+		}
 	})
 	
 	return g.Wait()

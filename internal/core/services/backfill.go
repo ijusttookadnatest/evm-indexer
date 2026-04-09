@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int) error {
+func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uint64, concurrencyF int, c chan struct{}) error {
 	cursor, err := s.repo.GetBackfillCursor(ctx)
 	if err != nil {
 		return err
@@ -79,5 +79,7 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 	}
 
 	slog.Info("backfill: completed successfully", "lastIndexed", targetId)
+	c <- struct{}{}
+	
 	return nil
 }

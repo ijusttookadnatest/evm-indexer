@@ -178,7 +178,8 @@ func TestBackfill(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			svc := NewIndexerService(tt.repo, tt.backfiller, &mockPubSub{}, newTestMetrics())
-			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2)
+			done := make(chan struct{}, 1)
+			err := svc.backfill(context.Background(), tt.from, tt.targetId, 2, done)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")
