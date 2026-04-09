@@ -5,8 +5,10 @@ package repository
 import (
 	"context"
 	"errors"
-	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
+	"math/big"
 	"testing"
+
+	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 )
 
 func TestCreate_Integration(t *testing.T) {
@@ -28,7 +30,7 @@ func TestCreate_Integration(t *testing.T) {
 			{BlockId: 200, LogIndex: 0, TxHash: "0xnewtx1", Emitter: "0xContract", Datas: "0xdata", Topics: []string{"0xTopic"}},
 		}
 
-		err := indexerRepo.Create(block, txs, events)
+		err := indexerRepo.Create(context.Background(), block, txs, events)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -50,7 +52,7 @@ func TestCreate_Integration(t *testing.T) {
 		block := domain.Block{
 			Hash: "0xblock100", Id: 100,
 		}
-		err := indexerRepo.Create(block, nil, nil)
+		err := indexerRepo.Create(context.Background(), block, nil, nil)
 		if err != nil {
 			t.Fatalf("duplicate block should be silently ignored, got: %v", err)
 		}
@@ -86,7 +88,7 @@ func TestBulkCreate_Integration(t *testing.T) {
 			},
 		}
 
-		if err := indexerRepo.BulkCreate(items); err != nil {
+		if err := indexerRepo.BulkCreate(context.Background(), items); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
@@ -101,8 +103,11 @@ func TestBulkCreate_Integration(t *testing.T) {
 		}
 
 		event, err := queryRepo.GetEventByTxHashLogIndex(context.Background(), "0xtxA1", 0)
-		if err != nil || len(event.Topics) != 2 {
-			t.Fatalf("expected event with 2 topics, got err=%v topics=%v", err, event.Topics)
+		if err != nil {
+			t.Fatalf("expected event, got err=%v", err)
+		}
+		if len(event.Topics) != 2 {
+			t.Fatalf("expected 2 topics, got %v", event.Topics)
 		}
 	})
 
@@ -115,7 +120,7 @@ func TestBulkCreate_Integration(t *testing.T) {
 			{Block: domain.Block{Hash: "0xblock101", Id: 101}, Txs: nil, Events: nil},
 		}
 
-		if err := indexerRepo.BulkCreate(items); err != nil {
+		if err := indexerRepo.BulkCreate(context.Background(), items); err != nil {
 			t.Fatalf("duplicate blocks should be silently ignored, got: %v", err)
 		}
 	})
@@ -128,7 +133,7 @@ func TestBulkCreate_Integration(t *testing.T) {
 			{Block: domain.Block{Hash: "0xEmpty2", Id: 11, ParentHash: "0xEmpty1", GasLimit: 1000, GasUsed: 0, Miner: "0xM", Timestamp: 400}},
 		}
 
-		if err := indexerRepo.BulkCreate(items); err != nil {
+		if err := indexerRepo.BulkCreate(context.Background(), items); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
@@ -143,7 +148,7 @@ func TestBackfillCursor_Integration(t *testing.T) {
 	indexerRepo := NewIndexerRepository(testDB)
 
 	t.Run("initial cursor is 0", func(t *testing.T) {
-		cursor, err := indexerRepo.GetBackfillCursor()
+		cursor, err := indexerRepo.GetBackfillCursor(context.Background())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -153,11 +158,11 @@ func TestBackfillCursor_Integration(t *testing.T) {
 	})
 
 	t.Run("update and read cursor", func(t *testing.T) {
-		err := indexerRepo.UpdateBackfillCursor(12345)
+		err := indexerRepo.UpdateBackfillCursor(context.Background(), 12345)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		cursor, err := indexerRepo.GetBackfillCursor()
+		cursor, err := indexerRepo.GetBackfillCursor(context.Background())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -165,27 +170,213 @@ func TestBackfillCursor_Integration(t *testing.T) {
 			t.Errorf("want 12345, got %d", cursor)
 		}
 		// reset
-		_ = indexerRepo.UpdateBackfillCursor(0)
+		_ = indexerRepo.UpdateBackfillCursor(context.Background(), 0)
 	})
 }
 
 func TestResetBackfillCursor_Integration(t *testing.T) {
 	indexerRepo := NewIndexerRepository(testDB)
 
-	_ = indexerRepo.UpdateBackfillCursor(12345)
+	_ = indexerRepo.UpdateBackfillCursor(context.Background(), 12345)
 
-	err := indexerRepo.ResetBackfillCursor()
+	err := indexerRepo.ResetBackfillCursor(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cursor, err := indexerRepo.GetBackfillCursor()
+	cursor, err := indexerRepo.GetBackfillCursor(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if cursor != 0 {
 		t.Errorf("want 0 after reset, got %d", cursor)
 	}
+}
+
+func TestGetLogsByTopic_Integration(t *testing.T) {
+	truncateAll(t)
+	seedFixtures(t)
+
+	repo := NewIndexerRepository(testDB)
+	ctx := context.Background()
+
+	t.Run("match single topic returns correct log", func(t *testing.T) {
+		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xTransferSig"},
+			From:   0,
+			Limit:  10,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(logs) != 1 {
+			t.Fatalf("expected 1 log, got %d", len(logs))
+		}
+		if logs[0].Emitter != "0xContract" {
+			t.Errorf("unexpected emitter: %v", logs[0].Emitter)
+		}
+		if logs[0].Id == 0 {
+			t.Error("id should be set (non-zero)")
+		}
+	})
+
+	t.Run("match multiple topics returns all", func(t *testing.T) {
+		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xTransferSig", "0xApprovalSig"},
+			From:   0,
+			Limit:  10,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(logs) != 2 {
+			t.Fatalf("expected 2 logs, got %d", len(logs))
+		}
+	})
+
+	t.Run("limit is respected", func(t *testing.T) {
+		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xTransferSig", "0xApprovalSig"},
+			From:   0,
+			Limit:  1,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(logs) != 1 {
+			t.Fatalf("expected 1 log (limit=1), got %d", len(logs))
+		}
+	})
+
+	t.Run("from cursor skips already processed logs", func(t *testing.T) {
+		// get first log to know its id
+		first, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xTransferSig", "0xApprovalSig"},
+			From:   0,
+			Limit:  1,
+		})
+		if err != nil || len(first) == 0 {
+			t.Fatalf("setup failed: %v", err)
+		}
+
+		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xTransferSig", "0xApprovalSig"},
+			From:   first[0].Id + 1,
+			Limit:  10,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(logs) != 1 {
+			t.Fatalf("expected 1 log after cursor, got %d", len(logs))
+		}
+	})
+
+	t.Run("no matching topic returns empty", func(t *testing.T) {
+		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
+			Topics: []string{"0xUnknownSig"},
+			From:   0,
+			Limit:  10,
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(logs) != 0 {
+			t.Errorf("expected empty slice, got %d", len(logs))
+		}
+	})
+}
+
+func TestBatchUpsertBalance_Integration(t *testing.T) {
+	ctx := context.Background()
+	repo := NewIndexerRepository(testDB)
+
+	readBalance := func(t *testing.T, wallet, token, tokenId string) string {
+		t.Helper()
+		var amount string
+		err := testDB.QueryRowContext(ctx,
+			`SELECT amount FROM wallet_balance WHERE wallet_address=$1 AND token_address=$2 AND token_id=$3`,
+			wallet, token, tokenId,
+		).Scan(&amount)
+		if err != nil {
+			t.Fatalf("failed to read balance: %v", err)
+		}
+		return amount
+	}
+
+	t.Run("inserts new entries", func(t *testing.T) {
+		testDB.Exec("TRUNCATE wallet_balance")
+
+		entries := []domain.BalanceEntry{
+			{WalletAddress: "0xAlice", TokenAddress: "0xToken", TokenId: "", Amount: big.NewInt(100)},
+			{WalletAddress: "0xBob", TokenAddress: "0xToken", TokenId: "", Amount: big.NewInt(50)},
+		}
+		if err := repo.BatchUpsertBalance(ctx, entries); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if got := readBalance(t, "0xAlice", "0xToken", ""); got != "100" {
+			t.Errorf("Alice: want 100, got %s", got)
+		}
+		if got := readBalance(t, "0xBob", "0xToken", ""); got != "50" {
+			t.Errorf("Bob: want 50, got %s", got)
+		}
+	})
+
+	t.Run("upsert accumulates amounts on conflict", func(t *testing.T) {
+		testDB.Exec("TRUNCATE wallet_balance")
+
+		first := []domain.BalanceEntry{
+			{WalletAddress: "0xAlice", TokenAddress: "0xToken", TokenId: "", Amount: big.NewInt(100)},
+		}
+		second := []domain.BalanceEntry{
+			{WalletAddress: "0xAlice", TokenAddress: "0xToken", TokenId: "", Amount: big.NewInt(40)},
+		}
+		if err := repo.BatchUpsertBalance(ctx, first); err != nil {
+			t.Fatalf("unexpected error on first upsert: %v", err)
+		}
+		if err := repo.BatchUpsertBalance(ctx, second); err != nil {
+			t.Fatalf("unexpected error on second upsert: %v", err)
+		}
+
+		if got := readBalance(t, "0xAlice", "0xToken", ""); got != "140" {
+			t.Errorf("want 140, got %s", got)
+		}
+	})
+
+	t.Run("erc721 entry uses token_id", func(t *testing.T) {
+		testDB.Exec("TRUNCATE wallet_balance")
+
+		entries := []domain.BalanceEntry{
+			{WalletAddress: "0xAlice", TokenAddress: "0xNFT", TokenId: "0x01", Amount: big.NewInt(1)},
+		}
+		if err := repo.BatchUpsertBalance(ctx, entries); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if got := readBalance(t, "0xAlice", "0xNFT", "0x01"); got != "1" {
+			t.Errorf("want 1, got %s", got)
+		}
+	})
+
+	t.Run("erc20 and erc721 same wallet are independent rows", func(t *testing.T) {
+		testDB.Exec("TRUNCATE wallet_balance")
+
+		entries := []domain.BalanceEntry{
+			{WalletAddress: "0xAlice", TokenAddress: "0xToken", TokenId: "", Amount: big.NewInt(200)},
+			{WalletAddress: "0xAlice", TokenAddress: "0xToken", TokenId: "0x01", Amount: big.NewInt(1)},
+		}
+		if err := repo.BatchUpsertBalance(ctx, entries); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if got := readBalance(t, "0xAlice", "0xToken", ""); got != "200" {
+			t.Errorf("erc20 balance: want 200, got %s", got)
+		}
+		if got := readBalance(t, "0xAlice", "0xToken", "0x01"); got != "1" {
+			t.Errorf("erc721 balance: want 1, got %s", got)
+		}
+	})
 }
 
 func TestDelete_Integration(t *testing.T) {
@@ -196,7 +387,7 @@ func TestDelete_Integration(t *testing.T) {
 	indexerRepo := NewIndexerRepository(testDB)
 
 	t.Run("delete existing block", func(t *testing.T) {
-		err := indexerRepo.Delete(100)
+		err := indexerRepo.Delete(context.Background(), 100)
 		if err != nil {
 			t.Fatalf("shouldn't have error: %v", err)
 		}
@@ -212,7 +403,7 @@ func TestDelete_Integration(t *testing.T) {
 	})
 
 	t.Run("delete non-existing block", func(t *testing.T) {
-		err := indexerRepo.Delete(999)
+		err := indexerRepo.Delete(context.Background(), 999)
 		if err != nil {
 			t.Fatalf("shouldn't have error for non-existing block: %v", err)
 		}

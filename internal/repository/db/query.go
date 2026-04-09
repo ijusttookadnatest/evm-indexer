@@ -63,7 +63,7 @@ func (repo *QueryRepository) GetBlocksByRangeTime(ctx context.Context, from, to 
 
 func (repo *QueryRepository) GetEventsByFilter(ctx context.Context, filter domain.EventFilter) ([]domain.Event, error) {
 	rows, err := repo.db.QueryContext(ctx, `
-		SELECT *
+		SELECT block_id, log_index, tx_hash, emitter, datas, topics
 		FROM events
 		WHERE
 			($1::TEXT IS NULL OR tx_hash = $1)
@@ -81,7 +81,7 @@ func (repo *QueryRepository) GetEventsByFilter(ctx context.Context, filter domai
 }
 
 func (repo *QueryRepository) GetEventByTxHashLogIndex(ctx context.Context, txHash string, logIndex int) (*domain.Event, error) {
-	rows, err := repo.db.QueryContext(ctx, `SELECT * FROM events  WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_id, log_index, tx_hash, emitter, datas, topics FROM events WHERE tx_hash = $1 AND log_index = $2;`, txHash, logIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (repo *QueryRepository) GetTransactionsByBatchBlocksId(ctx context.Context,
 }
 
 func (repo *QueryRepository) GetEventsByBatchTxsHash(ctx context.Context, txsHash []string) ([]domain.Event, error) {
-	rows, err := repo.db.QueryContext(ctx, `SELECT * FROM events WHERE tx_hash = ANY($1);`, pq.Array(txsHash))
+	rows, err := repo.db.QueryContext(ctx, `SELECT block_id, log_index, tx_hash, emitter, datas, topics FROM events WHERE tx_hash = ANY($1);`, pq.Array(txsHash))
 	if err != nil {
 		return nil, err
 	}

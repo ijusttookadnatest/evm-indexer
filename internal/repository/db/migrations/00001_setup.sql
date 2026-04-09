@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 CREATE TABLE IF NOT EXISTS events (
+    id BIGSERIAL,
     block_id INT NOT NULL,
     log_index INT NOT NULL,
     tx_hash VARCHAR(66) REFERENCES transactions(tx_hash) ON DELETE CASCADE,

@@ -20,8 +20,8 @@ func NewIndexerRepository(db *sql.DB) *IndexerRepository {
 	return &IndexerRepository{db: db}
 }
 
-func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transaction, events []domain.Event) error {
-	tx, err := repo.db.Begin()
+func (repo *IndexerRepository) Create(ctx context.Context, block domain.Block, txs []domain.Transaction, events []domain.Event) error {
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -72,9 +72,9 @@ func (repo *IndexerRepository) Create(block domain.Block, txs []domain.Transacti
 	return nil
 }
 
-func (repo *IndexerRepository) BulkCreate(items []domain.BlockTxsEvents) error {
+func (repo *IndexerRepository) BulkCreate(ctx context.Context, items []domain.BlockTxsEvents) error {
 	start := time.Now()
-	sqlTx, err := repo.db.Begin()
+	sqlTx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -195,27 +195,27 @@ func (repo *IndexerRepository) BulkCreate(items []domain.BlockTxsEvents) error {
 	return nil
 }
 
-func (repo *IndexerRepository) GetBackfillCursor() (uint64, error) {
+func (repo *IndexerRepository) GetBackfillCursor(ctx context.Context) (uint64, error) {
 	var id uint64
-	err := repo.db.QueryRow(`SELECT last_block_id FROM backfill_cursor;`).Scan(&id)
+	err := repo.db.QueryRowContext(ctx, `SELECT last_block_id FROM backfill_cursor;`).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 	return id, nil
 }
 
-func (repo *IndexerRepository) UpdateBackfillCursor(blockId uint64) error {
-	_, err := repo.db.Exec(`UPDATE backfill_cursor SET last_block_id = $1;`, blockId)
+func (repo *IndexerRepository) UpdateBackfillCursor(ctx context.Context, blockId uint64) error {
+	_, err := repo.db.ExecContext(ctx, `UPDATE backfill_cursor SET last_block_id = $1;`, blockId)
 	return err
 }
 
-func (repo *IndexerRepository) ResetBackfillCursor() error {
-	_, err := repo.db.Exec(`UPDATE backfill_cursor SET last_block_id = 0;`)
+func (repo *IndexerRepository) ResetBackfillCursor(ctx context.Context) error {
+	_, err := repo.db.ExecContext(ctx, `UPDATE backfill_cursor SET last_block_id = 0;`)
 	return err
 }
 
-func (repo *IndexerRepository) Delete(blockId uint64) error {
-	_, err := repo.db.Exec(`DELETE FROM blocks WHERE block_id = $1;`, blockId)
+func (repo *IndexerRepository) Delete(ctx context.Context, blockId uint64) error {
+	_, err := repo.db.ExecContext(ctx, `DELETE FROM blocks WHERE block_id = $1;`, blockId)
 	return err
 }
 
@@ -235,22 +235,22 @@ func (repo *IndexerRepository) GetBlockById(ctx context.Context, id uint64) (*do
 	return &b, nil
 }
 
-func (repo *IndexerRepository) GetBalancefillCursor() (uint64, error) {
+func (repo *IndexerRepository) GetBalancefillCursor(ctx context.Context) (uint64, error) {
 	var id uint64
-	err := repo.db.QueryRow(`SELECT last_block_id FROM balancefill_cursor;`).Scan(&id)
+	err := repo.db.QueryRowContext(ctx, `SELECT last_block_id FROM balancefill_cursor;`).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 	return id, nil
 }
 
-func (repo *IndexerRepository) UpdateBalancefillCursor(blockId uint64) error {
-	_, err := repo.db.Exec(`UPDATE balancefill_cursor SET last_block_id = $1;`, blockId)
+func (repo *IndexerRepository) UpdateBalancefillCursor(ctx context.Context, blockId uint64) error {
+	_, err := repo.db.ExecContext(ctx, `UPDATE balancefill_cursor SET last_block_id = $1;`, blockId)
 	return err
 }
 
-func (repo *IndexerRepository) ResetBalancefillCursor() error {
-	_, err := repo.db.Exec(`UPDATE balancefill_cursor SET last_block_id = 0;`)
+func (repo *IndexerRepository) ResetBalancefillCursor(ctx context.Context) error {
+	_, err := repo.db.ExecContext(ctx, `UPDATE balancefill_cursor SET last_block_id = 0;`)
 	return err
 }
 

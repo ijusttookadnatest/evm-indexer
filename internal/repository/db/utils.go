@@ -58,6 +58,9 @@ func fetchTxs(rows *sql.Rows) ([]domain.Transaction, error) {
 		return nil, err
 	}
 	rows.Close()
+	if len(txs) == 0 {
+		return nil, domain.ErrNotFound
+	}
 	return txs, nil
 }
 
@@ -74,6 +77,9 @@ func fetchEvents(rows *sql.Rows) ([]domain.Event, error) {
 		return nil, err
 	}
 	rows.Close()
+	if len(events) == 0 {
+		return nil, domain.ErrNotFound
+	}
 	return events, nil
 }
 
@@ -144,6 +150,7 @@ func scanEvent(row *sql.Rows) (*domain.Event, error) {
 func scanLog(row *sql.Rows) (*domain.Log, error) {
 	event := new(domain.Log)
 	err := row.Scan(
+		&event.Id,
 		&event.Emitter,
 		&event.Datas,
 		pq.Array(&event.Topics),
