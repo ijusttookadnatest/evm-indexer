@@ -64,9 +64,24 @@ type EventFilter struct {
     Limit *int
 }
 
-type WalletBalance struct {
-    WalletAddress string
-    TokenAddress  string
-    TokenId       string // "" for ERC20, tokenId hex for ERC721/1155
+// type WalletBalance struct {
+//     WalletAddress string
+//     TokenAddress  string
+//     TokenId       string // "" for ERC20, tokenId hex for ERC721/1155
+//     Amount        *big.Int
+// }
+
+// type BalanceUpdate struct {
+//     From string
+//     To string
+//     TokenAddress string
+//     TokenId string
+//     Delta *big.Int
+// }
+
+type BalanceEntry struct {                                                                                                          
+    WalletAddress string                                                                                                            
+    TokenAddress  string                                                                                                            
+    TokenId       string
     Amount        *big.Int
 }
