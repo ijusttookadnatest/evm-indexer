@@ -16,10 +16,11 @@ type Event struct {
 }
 
 type Log struct {
-    Id uint64
+    Id      uint64
+    BlockId uint64
     Emitter string
-    Datas string
-    Topics []string
+    Datas   string
+    Topics  []string
 }
 
 type BlockTxsEvents struct{
@@ -72,9 +73,9 @@ type EventFilter struct {
 }
 
 type LogFilter struct {
-    Topics []string
-    From   uint64
-    Limit  uint64
+    Topics    []string
+    FromBlock uint64
+    ToBlock   uint64
 }
 
 // type WalletBalance struct {

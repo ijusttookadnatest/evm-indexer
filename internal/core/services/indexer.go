@@ -56,7 +56,7 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 		select {
 		case <-backfillChan: {
 			i.metrics.BalancefillIsSyncing.Inc()
-			err := i.balancefill(ctx, 1000, 96)
+			err := i.balancefill(ctx, 96)
 			if err != nil {
 				i.metrics.BalancefillError.Inc()
 			}

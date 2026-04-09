@@ -151,6 +151,7 @@ func scanLog(row *sql.Rows) (*domain.Log, error) {
 	event := new(domain.Log)
 	err := row.Scan(
 		&event.Id,
+		&event.BlockId,
 		&event.Emitter,
 		&event.Datas,
 		pq.Array(&event.Topics),

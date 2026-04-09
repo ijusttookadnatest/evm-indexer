@@ -200,11 +200,11 @@ func TestGetLogsByTopic_Integration(t *testing.T) {
 	repo := NewIndexerRepository(testDB)
 	ctx := context.Background()
 
-	t.Run("match single topic returns correct log", func(t *testing.T) {
+	t.Run("match single topic in block range returns correct log", func(t *testing.T) {
 		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xTransferSig"},
-			From:   0,
-			Limit:  10,
+			Topics:    []string{"0xTransferSig"},
+			FromBlock: 100,
+			ToBlock:   100,
 		})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -218,13 +218,16 @@ func TestGetLogsByTopic_Integration(t *testing.T) {
 		if logs[0].Id == 0 {
 			t.Error("id should be set (non-zero)")
 		}
+		if logs[0].BlockId != 100 {
+			t.Errorf("expected block_id 100, got %d", logs[0].BlockId)
+		}
 	})
 
-	t.Run("match multiple topics returns all", func(t *testing.T) {
+	t.Run("match multiple topics in block range returns all", func(t *testing.T) {
 		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xTransferSig", "0xApprovalSig"},
-			From:   0,
-			Limit:  10,
+			Topics:    []string{"0xTransferSig", "0xApprovalSig"},
+			FromBlock: 100,
+			ToBlock:   100,
 		})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -234,49 +237,25 @@ func TestGetLogsByTopic_Integration(t *testing.T) {
 		}
 	})
 
-	t.Run("limit is respected", func(t *testing.T) {
+	t.Run("block range excludes events outside range", func(t *testing.T) {
 		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xTransferSig", "0xApprovalSig"},
-			From:   0,
-			Limit:  1,
+			Topics:    []string{"0xTransferSig", "0xApprovalSig"},
+			FromBlock: 101,
+			ToBlock:   102,
 		})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if len(logs) != 1 {
-			t.Fatalf("expected 1 log (limit=1), got %d", len(logs))
-		}
-	})
-
-	t.Run("from cursor skips already processed logs", func(t *testing.T) {
-		// get first log to know its id
-		first, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xTransferSig", "0xApprovalSig"},
-			From:   0,
-			Limit:  1,
-		})
-		if err != nil || len(first) == 0 {
-			t.Fatalf("setup failed: %v", err)
-		}
-
-		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xTransferSig", "0xApprovalSig"},
-			From:   first[0].Id + 1,
-			Limit:  10,
-		})
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if len(logs) != 1 {
-			t.Fatalf("expected 1 log after cursor, got %d", len(logs))
+		if len(logs) != 0 {
+			t.Fatalf("expected 0 logs for blocks 101-102, got %d", len(logs))
 		}
 	})
 
 	t.Run("no matching topic returns empty", func(t *testing.T) {
 		logs, err := repo.GetLogsByTopic(ctx, domain.LogFilter{
-			Topics: []string{"0xUnknownSig"},
-			From:   0,
-			Limit:  10,
+			Topics:    []string{"0xUnknownSig"},
+			FromBlock: 100,
+			ToBlock:   102,
 		})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)

@@ -290,10 +290,10 @@ func (repo *IndexerRepository) GetMaxIndexedBlock(ctx context.Context) (uint64, 
 
 func (repo *IndexerRepository) GetLogsByTopic(ctx context.Context, filter domain.LogFilter) ([]domain.Log, error) {
 	rows, err := repo.db.QueryContext(ctx, `
-		SELECT id, emitter, datas, topics
+		SELECT id, block_id, emitter, datas, topics
 		FROM events
-		WHERE topics[1] = ANY($1) AND id >= $2
-		LIMIT $3;`, pq.Array(filter.Topics), filter.From, filter.Limit)
+		WHERE topics[1] = ANY($1) AND block_id >= $2 AND block_id <= $3;`,
+		pq.Array(filter.Topics), filter.FromBlock, filter.ToBlock)
 	if err != nil {
 		return nil, err
 	}
