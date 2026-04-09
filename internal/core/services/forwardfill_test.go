@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"math/big"
 	"testing"
 	"time"
 
@@ -21,10 +20,14 @@ type mockFFRepo struct {
 func (m *mockFFRepo) GetBackfillCursor() (uint64, error)    { return 0, nil }
 func (m *mockFFRepo) UpdateBackfillCursor(_ uint64) error   { return nil }
 func (m *mockFFRepo) ResetBackfillCursor() error            { return nil }
-func (m *mockFFRepo) GetBalancefillCursor() (uint64, error) { return 0, nil }
-func (m *mockFFRepo) UpdateBalancefillCursor(_ uint64) error { return nil }
-func (m *mockFFRepo) ResetBalancefillCursor() error          { return nil }
-func (m *mockFFRepo) UpsertBalance(_, _, _, _ string, _ big.Int) error { return nil }
+func (m *mockFFRepo) GetBalancefillCursor() (uint64, error)                             { return 0, nil }
+func (m *mockFFRepo) UpdateBalancefillCursor(_ uint64) error                            { return nil }
+func (m *mockFFRepo) ResetBalancefillCursor() error                                     { return nil }
+func (m *mockFFRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)              { return 0, nil }
+func (m *mockFFRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error { return nil }
+func (m *mockFFRepo) GetLogsByTopic(_ context.Context, _ domain.LogFilter) ([]domain.Log, error) {
+	return nil, nil
+}
 func (m *mockFFRepo) Delete(_ uint64) error                                              { return nil }
 func (m *mockFFRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Block, error) {
 	return nil, domain.ErrNotFound

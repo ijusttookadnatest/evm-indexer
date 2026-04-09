@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"math/big"
 	"testing"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
@@ -55,11 +54,15 @@ func (m *mockIndexerRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Blo
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockIndexerRepo) ResetBackfillCursor() error          { return nil }
-func (m *mockIndexerRepo) GetBalancefillCursor() (uint64, error) { return 0, nil }
-func (m *mockIndexerRepo) UpdateBalancefillCursor(_ uint64) error { return nil }
-func (m *mockIndexerRepo) ResetBalancefillCursor() error         { return nil }
-func (m *mockIndexerRepo) UpsertBalance(_, _, _, _ string, _ big.Int) error { return nil }
+func (m *mockIndexerRepo) ResetBackfillCursor() error                                        { return nil }
+func (m *mockIndexerRepo) GetBalancefillCursor() (uint64, error)                             { return 0, nil }
+func (m *mockIndexerRepo) UpdateBalancefillCursor(_ uint64) error                            { return nil }
+func (m *mockIndexerRepo) ResetBalancefillCursor() error                                     { return nil }
+func (m *mockIndexerRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)              { return 0, nil }
+func (m *mockIndexerRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error { return nil }
+func (m *mockIndexerRepo) GetLogsByTopic(_ context.Context, _ domain.LogFilter) ([]domain.Log, error) {
+	return nil, nil
+}
 
 func (m *mockIndexerRepo) BulkCreate(items []domain.BlockTxsEvents) error {
 	m.createCalls += len(items)
