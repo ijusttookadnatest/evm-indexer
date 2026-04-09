@@ -97,6 +97,42 @@ var transferSignatures = []string{
 	"0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb", // ERC1155 TransferBatch
 }
 
+type balanceKey struct {
+	wallet string
+	token string
+	id string
+}
+
+func aggregateSameEntries(entries []domain.BalanceEntry) []domain.BalanceEntry {
+	m := make(map[balanceKey]*big.Int)
+	
+	for _, entry := range entries {
+		key := balanceKey{
+			entry.WalletAddress,
+			entry.TokenAddress,
+			entry.TokenId,
+		}
+		if m[key] != nil {
+			m[key].Add(m[key], entry.Amount)
+			} else {
+			m[key] = new(big.Int).Set(entry.Amount)
+		}
+	}
+	
+	newEntries := make([]domain.BalanceEntry, len(m))
+	i := 0
+	for balanceKey, amount := range m {
+		newEntries[i] = domain.BalanceEntry{
+			WalletAddress: balanceKey.wallet,
+			TokenAddress: balanceKey.token,
+			TokenId: balanceKey.id,
+			Amount: amount,
+		}
+		i++
+	}
+	return newEntries
+}
+
 func (s *IndexerService) balancefill(ctx context.Context, batchSize uint64, lagFinalized int) error {
 	cursor, err := s.repo.GetBalancefillCursor(ctx)
 	if err != nil {
@@ -110,6 +146,7 @@ func (s *IndexerService) balancefill(ctx context.Context, batchSize uint64, lagF
 			return ctx.Err()
 		}
 		default: {
+			var fullBalanceEntries []domain.BalanceEntry
 			var balanceEntries []domain.BalanceEntry
 	
 			maxBlock, err := s.repo.GetMaxIndexedBlock(ctx)
@@ -142,10 +179,9 @@ func (s *IndexerService) balancefill(ctx context.Context, batchSize uint64, lagF
 			}
 	
 			for _, event := range events {
-				balanceEntries = append(balanceEntries, extractBalanceEntriesFromLog(event)...)
+				fullBalanceEntries = append(fullBalanceEntries, extractBalanceEntriesFromLog(event)...)
 			}
-			// TODO(human): aggregate balanceEntries by (WalletAddress, TokenAddress, TokenId) into a new slice before upsert
-
+			balanceEntries = aggregateSameEntries(fullBalanceEntries)
 			err = s.repo.BatchUpsertBalance(ctx, balanceEntries)
 			if err != nil {
 				slog.Error("balancefill: failed to batch upsert balance update", "cursor", cursor, "err", err)
