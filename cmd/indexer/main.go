@@ -15,8 +15,6 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
 	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
-
-	"golang.org/x/sync/errgroup"
 )
 
 func run(ctx context.Context, reindex bool) error {
@@ -25,8 +23,6 @@ func run(ctx context.Context, reindex bool) error {
 		return err
 	}
 	
-	g, ctx := errgroup.WithContext(ctx)
-
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
 		return err
@@ -59,11 +55,7 @@ func run(ctx context.Context, reindex bool) error {
 	}
 	indexerService := service.NewIndexerService(indexerRepo, fetcher, pubsub, metrics)
 
-	g.Go(func() error {
-		return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)
-	})
-
-	return g.Wait()
+	return indexerService.Run(ctx, cfg.From, cfg.ConcurrencyF)
 }
 
 func main() {

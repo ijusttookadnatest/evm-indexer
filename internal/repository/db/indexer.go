@@ -284,7 +284,7 @@ func (repo *IndexerRepository) BatchUpsertBalance(ctx context.Context, entries [
 
 func (repo *IndexerRepository) GetMaxIndexedBlock(ctx context.Context) (uint64, error) {
 	var maxId uint64
-	err := repo.db.QueryRowContext(ctx, `SELECT COALESCE(MAX(id), 0) FROM blocks;`).Scan(&maxId)
+	err := repo.db.QueryRowContext(ctx, `SELECT COALESCE(MAX(block_id), 0) FROM blocks;`).Scan(&maxId)
 	return maxId, err
 }
 

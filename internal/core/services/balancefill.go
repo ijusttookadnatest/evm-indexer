@@ -144,7 +144,8 @@ func (s *IndexerService) balancefill(ctx context.Context, batchSize uint64, lagF
 			for _, event := range events {
 				balanceEntries = append(balanceEntries, extractBalanceEntriesFromLog(event)...)
 			}
-	
+			// TODO(human): aggregate balanceEntries by (WalletAddress, TokenAddress, TokenId) into a new slice before upsert
+
 			err = s.repo.BatchUpsertBalance(ctx, balanceEntries)
 			if err != nil {
 				slog.Error("balancefill: failed to batch upsert balance update", "cursor", cursor, "err", err)
