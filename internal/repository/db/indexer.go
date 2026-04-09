@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"math/big"
 	"time"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
@@ -255,8 +254,14 @@ func (repo *IndexerRepository) ResetBalancefillCursor() error {
 	return err
 }
 
-func (repo *IndexerRepository) UpsertBalance(from, to, token, tokenId string, amount big.Int) error {
-	const zeroAddr = "0x0000000000000000000000000000000000000000"
+func (repo *IndexerRepository) BatchUpsertBalance(entries []domain.BalanceEntry) error {
+	var walletAddress, tokenAddress, tokenId, amount []string
+	for _, entry := range entries {
+		walletAddress = append(walletAddress, entry.WalletAddress)
+		tokenAddress = append(tokenAddress, entry.TokenAddress)
+		tokenId = append(tokenId, entry.TokenId)
+		amount = append(amount, entry.Amount.String())
+	}
 
 	sqlTx, err := repo.db.Begin()
 	if err != nil {
@@ -264,23 +269,14 @@ func (repo *IndexerRepository) UpsertBalance(from, to, token, tokenId string, am
 	}
 	defer sqlTx.Rollback()
 
-	upsert := `
+	batchUpsert := `
 		INSERT INTO wallet_balance (wallet_address, token_address, token_id, amount)
-		VALUES ($1, $2, $3, $4::numeric)
+		SELECT * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::numeric[])
 		ON CONFLICT (wallet_address, token_address, token_id)
 		DO UPDATE SET amount = wallet_balance.amount + EXCLUDED.amount;`
 
-	if from != zeroAddr {
-		neg := new(big.Int).Neg(&amount)
-		if _, err = sqlTx.Exec(upsert, from, token, tokenId, neg.String()); err != nil {
-			return err
-		}
-	}
-
-	if to != zeroAddr {
-		if _, err = sqlTx.Exec(upsert, to, token, tokenId, amount.String()); err != nil {
-			return err
-		}
+	if _, err := sqlTx.Exec(batchUpsert, pq.Array(walletAddress), pq.Array(tokenAddress), pq.Array(tokenId), pq.Array(amount)); err != nil {
+		return err
 	}
 
 	return sqlTx.Commit()
