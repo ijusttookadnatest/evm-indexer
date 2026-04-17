@@ -107,17 +107,18 @@ jobs:
 
             docker pull $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
             docker pull $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
- 
-            docker stop api indexer 2>/dev/null || true
-            docker rm   api indexer 2>/dev/null || true
 
-            docker run -d --name api \
-              --restart unless-stopped \
-              --env-file /etc/evm-indexer/.env \
-              -p 8080:8080 \
+            docker stop indexer-api indexer-indexer 2>/dev/null || true
+            docker rm   indexer-api indexer-indexer 2>/dev/null || true
+
+            docker run -d --name indexer-api \
+              --restart on-failure \
+              --env-file ~/.env.api \
+              -p 3002:3000 \
               $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
-   
-            docker run -d --name indexer \
-              --restart unless-stopped \
-              --env-file /etc/evm-indexer/.env \
+
+            docker run -d --name indexer-indexer \
+              --restart on-failure \
+              --env-file ~/.env.indexer \
+              -p 3001:3000 \
               $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
