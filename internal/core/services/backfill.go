@@ -50,6 +50,9 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 					slog.Error("backfill: fetch failed", "blockId", blockId, "err", err)
 					return err
 				}
+				if i == 0 {
+					slog.Info("DEBUG: data.tx:", "datatx", len(data.Txs), "Evnets", len(data.Events))
+				}
 				s.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
 				results[i] = data
 				return nil

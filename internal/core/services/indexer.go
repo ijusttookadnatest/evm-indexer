@@ -35,23 +35,23 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 		i.metrics.ForwardfillIsSyncing.Dec()
 		return err
 	})
-	// targetId, err := i.fetcher.GetLastBlockId()
-	// if err != nil {
-	// 	cancel()
-	// 	g.Wait()
-	// 	return err
-	// }
-	// g.Go(func() error {
-	// 	i.metrics.BackfillIsSyncing.Inc()
-	// 	err := i.backfill(ctx, from, targetId, concurrencyF, backfillChan)
-	// 	if err != nil {
-	// 		i.metrics.BackfillError.Inc()
-	// 	}
-	// 	i.metrics.BackfillIsSyncing.Dec()
-	// 	return err
-	// })
+	targetId, err := i.fetcher.GetLastBlockId()
+	if err != nil {
+		cancel()
+		g.Wait()
+		return err
+	}
+	g.Go(func() error {
+		i.metrics.BackfillIsSyncing.Inc()
+		err := i.backfill(ctx, from, targetId, concurrencyF, backfillChan)
+		if err != nil {
+			i.metrics.BackfillError.Inc()
+		}
+		i.metrics.BackfillIsSyncing.Dec()
+		return err
+	})
 
-	backfillChan <- struct{}{}
+	// backfillChan <- struct{}{}
 	g.Go(func() error {
 		select {
 		case <-backfillChan: {
