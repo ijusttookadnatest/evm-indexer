@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func New(dsn string) (*redis.Client,error) {
+func New(dsn string) (*redis.Client, error) {
 	opt, err := redis.ParseURL(dsn)
 	if err != nil {
 		return nil, err

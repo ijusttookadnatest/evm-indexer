@@ -99,13 +99,13 @@ var transferSignatures = []string{
 
 type balanceKey struct {
 	wallet string
-	token string
-	id string
+	token  string
+	id     string
 }
 
 func aggregateSameEntries(entries []domain.BalanceEntry) []domain.BalanceEntry {
 	m := make(map[balanceKey]*big.Int)
-	
+
 	for _, entry := range entries {
 		key := balanceKey{
 			entry.WalletAddress,
@@ -114,19 +114,19 @@ func aggregateSameEntries(entries []domain.BalanceEntry) []domain.BalanceEntry {
 		}
 		if m[key] != nil {
 			m[key].Add(m[key], entry.Amount)
-			} else {
+		} else {
 			m[key] = new(big.Int).Set(entry.Amount)
 		}
 	}
-	
+
 	newEntries := make([]domain.BalanceEntry, len(m))
 	i := 0
 	for balanceKey, amount := range m {
 		newEntries[i] = domain.BalanceEntry{
 			WalletAddress: balanceKey.wallet,
-			TokenAddress: balanceKey.token,
-			TokenId: balanceKey.id,
-			Amount: amount,
+			TokenAddress:  balanceKey.token,
+			TokenId:       balanceKey.id,
+			Amount:        amount,
 		}
 		i++
 	}

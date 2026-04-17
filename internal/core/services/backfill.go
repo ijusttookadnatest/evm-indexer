@@ -77,12 +77,12 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 		s.metrics.BackfillLastBlockId.Set(float64(end))
 		s.metrics.SyncedBlock.Add(float64(len(results)))
 		slog.Info("backfill: progress", "curr", end, "targetId", targetId, "remaining", targetId-end)
-		
+
 		curr = end + 1
 	}
 
 	slog.Info("backfill: completed successfully", "lastIndexed", targetId)
 	c <- struct{}{}
-	
+
 	return nil
 }

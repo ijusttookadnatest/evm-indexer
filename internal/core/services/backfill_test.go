@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
 	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func newTestMetrics() *custprometheus.IndexerMetrics {
@@ -54,12 +54,14 @@ func (m *mockIndexerRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Blo
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockIndexerRepo) ResetBackfillCursor(_ context.Context) error                                        { return nil }
-func (m *mockIndexerRepo) GetBalancefillCursor(_ context.Context) (uint64, error)                             { return 0, nil }
-func (m *mockIndexerRepo) UpdateBalancefillCursor(_ context.Context, _ uint64) error                          { return nil }
-func (m *mockIndexerRepo) ResetBalancefillCursor(_ context.Context) error                                     { return nil }
-func (m *mockIndexerRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)              { return 0, nil }
-func (m *mockIndexerRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error { return nil }
+func (m *mockIndexerRepo) ResetBackfillCursor(_ context.Context) error               { return nil }
+func (m *mockIndexerRepo) GetBalancefillCursor(_ context.Context) (uint64, error)    { return 0, nil }
+func (m *mockIndexerRepo) UpdateBalancefillCursor(_ context.Context, _ uint64) error { return nil }
+func (m *mockIndexerRepo) ResetBalancefillCursor(_ context.Context) error            { return nil }
+func (m *mockIndexerRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)      { return 0, nil }
+func (m *mockIndexerRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error {
+	return nil
+}
 func (m *mockIndexerRepo) GetLogsByTopic(_ context.Context, _ domain.LogFilter) ([]domain.Log, error) {
 	return nil, nil
 }
