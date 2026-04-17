@@ -107,7 +107,7 @@ jobs:
 
             docker pull $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
             docker pull $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
-
+ 
             docker stop api indexer 2>/dev/null || true
             docker rm   api indexer 2>/dev/null || true
 
