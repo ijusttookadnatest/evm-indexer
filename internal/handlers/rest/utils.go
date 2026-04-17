@@ -187,6 +187,10 @@ func extractTxFilter(r *http.Request) (domain.TransactionFilter, error) {
 		return filter, errInvalidParams
 	}
 
+	if hasAddressFilter && !hasRange {
+		return filter, errInvalidParams
+	}
+
 	if hasHash {
 		filter.Hash = &hash
 	}
