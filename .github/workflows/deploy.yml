@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 permissions:
-  id-token: write  # required for OIDC token
+  id-token: write
   contents: read
 
 env:
@@ -13,25 +13,25 @@ env:
 
 jobs:
 
-  # ── 1. Run tests before any deployment ──────────────────────────────────────
+  # ── 1. Tests ─────────────────────────────────────────────────────────────────
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
       - name: Build
         run: go build -v ./...
 
-      - name: Test
-        run: go test -v ./...
+      - name: Unit tests
+        run: go test -v -race -count=1 ./...
 
-  # ── 2. Build & push both images to ECR (parallel) ───────────────────────────
+  # ── 2. Build & push both images to ECR (parallel) ────────────────────────────
   build-and-push:
     name: Build & Push (${{ matrix.app }})
     runs-on: ubuntu-latest
@@ -39,10 +39,6 @@ jobs:
     strategy:
       matrix:
         app: [api, indexer]
-
-    outputs:
-      api-image: ${{ steps.set-output.outputs.api-image }}
-      indexer-image: ${{ steps.set-output.outputs.indexer-image }}
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +54,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image
-        id: build
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ matrix.app == 'api' && secrets.ECR_REPO_API || secrets.ECR_REPO_INDEXER }}
@@ -71,17 +66,8 @@ jobs:
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "${{ matrix.app }}-image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Export image output
-        id: set-output
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ matrix.app == 'api' && secrets.ECR_REPO_API || secrets.ECR_REPO_INDEXER }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: echo "${{ matrix.app }}-image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  # ── 3. Deploy to EC2 via SSH ─────────────────────────────────────────────────
+  # ── 3. Deploy to EC2 via SSH ──────────────────────────────────────────────────
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
@@ -95,12 +81,42 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Get ECR registry
+        id: ecr
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "registry=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ECR_REPO_API: ${{ secrets.ECR_REPO_API }}
+          ECR_REPO_INDEXER: ${{ secrets.ECR_REPO_INDEXER }}
+          IMAGE_TAG: ${{ github.sha }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: AWS_REGION,ECR_REPO_API,ECR_REPO_INDEXER,IMAGE_TAG
+          envs: AWS_REGION,ECR_REGISTRY,ECR_REPO_API,ECR_REPO_INDEXER,IMAGE_TAG
           script: |
-            # TODO(human): implement the restart logic here
+            aws ecr get-login-password --region $AWS_REGION \
+              | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            docker pull $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
+            docker pull $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
+
+            docker stop api indexer 2>/dev/null || true
+            docker rm   api indexer 2>/dev/null || true
+
+            docker run -d --name api \
+              --restart unless-stopped \
+              --env-file /etc/evm-indexer/.env \
+              -p 8080:8080 \
+              $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
+
+            docker run -d --name indexer \
+              --restart unless-stopped \
+              --env-file /etc/evm-indexer/.env \
+              $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
