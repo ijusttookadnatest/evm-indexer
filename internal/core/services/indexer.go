@@ -9,14 +9,14 @@ import (
 )
 
 type IndexerService struct {
-	repo           ports.IndexerRepository
-	fetcher        ports.Fetcher
-	pubsub		   ports.RedisPubSub
-	metrics 	   *prometheus.IndexerMetrics
+	repo    ports.IndexerRepository
+	fetcher ports.Fetcher
+	pubsub  ports.RedisPubSub
+	metrics *prometheus.IndexerMetrics
 }
 
 func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub, metrics *prometheus.IndexerMetrics) *IndexerService {
-	return &IndexerService{repo:repo, fetcher:fetcher, pubsub:pubsub, metrics:metrics}
+	return &IndexerService{repo: repo, fetcher: fetcher, pubsub: pubsub, metrics: metrics}
 }
 
 func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int) error {
@@ -54,18 +54,20 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	// backfillChan <- struct{}{}
 	g.Go(func() error {
 		select {
-		case <-backfillChan: {
-			i.metrics.BalancefillIsSyncing.Inc()
-			err := i.balancefill(ctx, 96)
-			if err != nil {
-				i.metrics.BalancefillError.Inc()
+		case <-backfillChan:
+			{
+				i.metrics.BalancefillIsSyncing.Inc()
+				err := i.balancefill(ctx, 96)
+				if err != nil {
+					i.metrics.BalancefillError.Inc()
+				}
+				i.metrics.BalancefillIsSyncing.Dec()
+				return err
 			}
-			i.metrics.BalancefillIsSyncing.Dec()
-			return err
-		}
-		case <-ctx.Done(): return ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	})
-	
+
 	return g.Wait()
 }

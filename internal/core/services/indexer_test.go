@@ -10,47 +10,47 @@ import (
 
 func TestRun(t *testing.T) {
 	tests := []struct {
-		name           string
-		repo           ports.IndexerRepository
-		fetcher        ports.Fetcher
-		pubsub ports.RedisPubSub
-		from           uint64
-		wantErr        bool
+		name    string
+		repo    ports.IndexerRepository
+		fetcher ports.Fetcher
+		pubsub  ports.RedisPubSub
+		from    uint64
+		wantErr bool
 	}{
 		{
-			name:           "GetLastBlockId error returns immediately",
-			repo:           &mockIndexerRepo{},
-			fetcher:        &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
-			pubsub: &mockPubSub{},
-			wantErr:        true,
+			name:    "GetLastBlockId error returns immediately",
+			repo:    &mockIndexerRepo{},
+			fetcher: &mockBackfiller{lastBlockIdErr: errors.New("rpc unreachable")},
+			pubsub:  &mockPubSub{},
+			wantErr: true,
 		},
 		{
-			name:           "GetBackfillCursor error propagates",
-			repo:           &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
-			fetcher:        &mockBackfiller{lastBlockId: 5},
-			pubsub: &mockPubSub{},
-			wantErr:        true,
+			name:    "GetBackfillCursor error propagates",
+			repo:    &mockIndexerRepo{cursorErr: errors.New("db connection lost")},
+			fetcher: &mockBackfiller{lastBlockId: 5},
+			pubsub:  &mockPubSub{},
+			wantErr: true,
 		},
 		{
-			name:           "FetchBlock error propagates",
-			repo:           &mockIndexerRepo{},
-			fetcher:        &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
-			pubsub: &mockPubSub{},
-			wantErr:        true,
+			name:    "FetchBlock error propagates",
+			repo:    &mockIndexerRepo{},
+			fetcher: &mockBackfiller{lastBlockId: 3, fetchErr: errors.New("rpc timeout")},
+			pubsub:  &mockPubSub{},
+			wantErr: true,
 		},
 		{
-			name:           "repo.Create error propagates",
-			repo:           &mockIndexerRepo{createErr: errors.New("db write failed")},
-			fetcher:        &mockBackfiller{lastBlockId: 2},
-			pubsub: &mockPubSub{},
-			wantErr:        true,
+			name:    "repo.Create error propagates",
+			repo:    &mockIndexerRepo{createErr: errors.New("db write failed")},
+			fetcher: &mockBackfiller{lastBlockId: 2},
+			pubsub:  &mockPubSub{},
+			wantErr: true,
 		},
 		{
-			name:           "Subscribe error propagates",
-			repo:           &mockIndexerRepo{},
-			fetcher:        &mockFFFetcher{subErr: errors.New("ws disconnected")},
-			pubsub: &mockPubSub{},
-			wantErr:        true,
+			name:    "Subscribe error propagates",
+			repo:    &mockIndexerRepo{},
+			fetcher: &mockFFFetcher{subErr: errors.New("ws disconnected")},
+			pubsub:  &mockPubSub{},
+			wantErr: true,
 		},
 	}
 

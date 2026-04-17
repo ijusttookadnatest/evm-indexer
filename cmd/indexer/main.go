@@ -22,12 +22,12 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	
+
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
 		return err
 	}
-	if err := repository.RunUpMigrations(db) ; err != nil {
+	if err := repository.RunUpMigrations(db); err != nil {
 		return err
 	}
 	redis, err := pubsub.New(cfg.RedisDSN)

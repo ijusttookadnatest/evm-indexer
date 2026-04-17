@@ -14,19 +14,18 @@ var fromDefault uint64 = 0
 var rpcRateLimitDefault float64 = 1
 
 type Config struct {
-	PostgresDSN string
-	RedisDSN    string
-	RpcHTTP     	string
-	RpcWS string
-	Port		string
+	PostgresDSN       string
+	RedisDSN          string
+	RpcHTTP           string
+	RpcWS             string
+	Port              string
 	PlaygroundEnabled bool
-	RangeMaxTime uint64
-	OffsetMax	uint64
-	RpcRateLimit float64
-	From		uint64
-	ConcurrencyF int
+	RangeMaxTime      uint64
+	OffsetMax         uint64
+	RpcRateLimit      float64
+	From              uint64
+	ConcurrencyF      int
 }
-
 
 func loadEnv(path string) (map[string]string, error) {
 	envFile, err := os.Open(path)
@@ -52,7 +51,7 @@ func getenv(env map[string]string, key string) string {
 	return os.Getenv(key)
 }
 
-func Load(path string) (*Config,error) {
+func Load(path string) (*Config, error) {
 	var rangeMaxTime, offsetMax, from uint64
 	var concurrencyF int
 	var rpcRateLimit float64
@@ -109,16 +108,16 @@ func Load(path string) (*Config,error) {
 	}
 
 	return &Config{
-		PostgresDSN: getenv(env, "POSTGRES_DSN"),
-		RedisDSN:    getenv(env, "REDIS_DSN"),
-		RpcHTTP: getenv(env, "RPC_HTTP"),
-		RpcWS: getenv(env, "RPC_WS"),
-		Port: getenv(env, "PORT"),
+		PostgresDSN:       getenv(env, "POSTGRES_DSN"),
+		RedisDSN:          getenv(env, "REDIS_DSN"),
+		RpcHTTP:           getenv(env, "RPC_HTTP"),
+		RpcWS:             getenv(env, "RPC_WS"),
+		Port:              getenv(env, "PORT"),
 		PlaygroundEnabled: pgEnabled,
-		RangeMaxTime: rangeMaxTime,
-		OffsetMax: offsetMax,
-		RpcRateLimit: rpcRateLimit,
-		From: from,
-		ConcurrencyF: concurrencyF,
+		RangeMaxTime:      rangeMaxTime,
+		OffsetMax:         offsetMax,
+		RpcRateLimit:      rpcRateLimit,
+		From:              from,
+		ConcurrencyF:      concurrencyF,
 	}, nil
 }

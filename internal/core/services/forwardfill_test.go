@@ -17,18 +17,18 @@ type mockFFRepo struct {
 	onCreate    chan struct{}
 }
 
-func (m *mockFFRepo) GetBackfillCursor(_ context.Context) (uint64, error)    { return 0, nil }
-func (m *mockFFRepo) UpdateBackfillCursor(_ context.Context, _ uint64) error { return nil }
-func (m *mockFFRepo) ResetBackfillCursor(_ context.Context) error            { return nil }
-func (m *mockFFRepo) GetBalancefillCursor(_ context.Context) (uint64, error)                             { return 0, nil }
-func (m *mockFFRepo) UpdateBalancefillCursor(_ context.Context, _ uint64) error                          { return nil }
-func (m *mockFFRepo) ResetBalancefillCursor(_ context.Context) error                                     { return nil }
-func (m *mockFFRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)              { return 0, nil }
+func (m *mockFFRepo) GetBackfillCursor(_ context.Context) (uint64, error)                 { return 0, nil }
+func (m *mockFFRepo) UpdateBackfillCursor(_ context.Context, _ uint64) error              { return nil }
+func (m *mockFFRepo) ResetBackfillCursor(_ context.Context) error                         { return nil }
+func (m *mockFFRepo) GetBalancefillCursor(_ context.Context) (uint64, error)              { return 0, nil }
+func (m *mockFFRepo) UpdateBalancefillCursor(_ context.Context, _ uint64) error           { return nil }
+func (m *mockFFRepo) ResetBalancefillCursor(_ context.Context) error                      { return nil }
+func (m *mockFFRepo) GetMaxIndexedBlock(_ context.Context) (uint64, error)                { return 0, nil }
 func (m *mockFFRepo) BatchUpsertBalance(_ context.Context, _ []domain.BalanceEntry) error { return nil }
 func (m *mockFFRepo) GetLogsByTopic(_ context.Context, _ domain.LogFilter) ([]domain.Log, error) {
 	return nil, nil
 }
-func (m *mockFFRepo) Delete(_ context.Context, _ uint64) error                           { return nil }
+func (m *mockFFRepo) Delete(_ context.Context, _ uint64) error { return nil }
 func (m *mockFFRepo) GetBlockById(_ context.Context, _ uint64) (*domain.Block, error) {
 	return nil, domain.ErrNotFound
 }

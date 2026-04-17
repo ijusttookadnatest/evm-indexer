@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
+	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -172,7 +172,7 @@ func TestMessageWriterCleansUpOnWriteError(t *testing.T) {
 		close(done)
 	}()
 
-	conn.Close()                          // force write failure
+	conn.Close()                         // force write failure
 	client.outgoing <- []byte("trigger") // unblock messageWriter so it attempts the write
 
 	select {

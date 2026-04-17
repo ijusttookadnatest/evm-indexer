@@ -26,17 +26,17 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
 		return err
 	}
-	if err := repository.RunUpMigrations(db) ; err != nil {
+	if err := repository.RunUpMigrations(db); err != nil {
 		return err
 	}
-	
+
 	redis, err := pubsub.New(cfg.RedisDSN)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func run(ctx context.Context) error {
 	pubsub := pubsub.NewRedisPubSub(redis)
 	queryRepo := repository.NewQueryRepository(db)
 	queryService := service.NewQueryService(queryRepo, cfg.OffsetMax, cfg.RangeMaxTime)
-	
+
 	wsHandler, err := ws.NewRouter(ctx, pubsub, metrics)
 	if err != nil {
 		return err

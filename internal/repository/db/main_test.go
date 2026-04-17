@@ -26,13 +26,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to ping DB: %v", err)
 	}
 
-	if err = RunUpMigrations(testDB) ; err != nil {
+	if err = RunUpMigrations(testDB); err != nil {
 		log.Fatalf("Failed to run up migrations: %v", err)
 	}
 
 	code := m.Run()
 
-	if err = RunDownMigrations(testDB) ; err != nil {
+	if err = RunDownMigrations(testDB); err != nil {
 		log.Fatalf("Failed to run down migrations: %v", err)
 	}
 	testDB.Close()

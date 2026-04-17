@@ -22,7 +22,7 @@ type SubscriptionFilter struct {
 }
 
 type Entity struct {
-	clientsChan map[SubscriptionFilter][]chan[]byte
+	clientsChan map[SubscriptionFilter][]chan []byte
 	mu          *sync.RWMutex
 	incoming    <-chan []byte
 	name        string
@@ -31,7 +31,7 @@ type Entity struct {
 
 func newEntity(name string, c <-chan []byte, metrics *custprometheus.ApiMetrics) *Entity {
 	return &Entity{
-		clientsChan: make(map[SubscriptionFilter][]chan[]byte),
+		clientsChan: make(map[SubscriptionFilter][]chan []byte),
 		mu:          &sync.RWMutex{},
 		incoming:    c,
 		name:        name,
