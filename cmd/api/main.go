@@ -26,6 +26,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("DEBUG DSN:", cfg.PostgresDSN)
 
 	g, ctx := errgroup.WithContext(ctx)
 

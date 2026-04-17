@@ -105,20 +105,5 @@ jobs:
             aws ecr get-login-password --region $AWS_REGION \
               | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-            docker pull $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
-            docker pull $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
-
-            docker stop indexer-api indexer-indexer 2>/dev/null || true
-            docker rm   indexer-api indexer-indexer 2>/dev/null || true
-
-            docker run -d --name indexer-api \
-              --restart on-failure \
-              --env-file ~/.env.api \
-              -p 3002:3000 \
-              $ECR_REGISTRY/$ECR_REPO_API:$IMAGE_TAG
-
-            docker run -d --name indexer-indexer \
-              --restart on-failure \
-              --env-file ~/.env.indexer \
-              -p 3001:3000 \
-              $ECR_REGISTRY/$ECR_REPO_INDEXER:$IMAGE_TAG
+            docker-compose -f ~/docker-compose.yml pull
+            docker-compose -f ~/docker-compose.yml up -d
