@@ -1,0 +1,106 @@
+name: Deploy to ECR + EC2
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write  # required for OIDC token
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+
+  # ── 1. Run tests before any deployment ──────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+  # ── 2. Build & push both images to ECR (parallel) ───────────────────────────
+  build-and-push:
+    name: Build & Push (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        app: [api, indexer]
+
+    outputs:
+      api-image: ${{ steps.set-output.outputs.api-image }}
+      indexer-image: ${{ steps.set-output.outputs.indexer-image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ matrix.app == 'api' && secrets.ECR_REPO_API || secrets.ECR_REPO_INDEXER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -f cmd/${{ matrix.app }}/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "${{ matrix.app }}-image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Export image output
+        id: set-output
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ matrix.app == 'api' && secrets.ECR_REPO_API || secrets.ECR_REPO_INDEXER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: echo "${{ matrix.app }}-image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  # ── 3. Deploy to EC2 via SSH ─────────────────────────────────────────────────
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_REGION,ECR_REPO_API,ECR_REPO_INDEXER,IMAGE_TAG
+          script: |
+            # TODO(human): implement the restart logic here
