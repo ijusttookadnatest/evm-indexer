@@ -27,9 +27,7 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	if err := repository.RunUpMigrations(db); err != nil {
-		return err
-	}
+
 	redis, err := pubsub.New(cfg.RedisDSN)
 	if err != nil {
 		return err
