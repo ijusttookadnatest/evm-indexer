@@ -7,11 +7,11 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github/ijusttookadnatest/evm-indexer/internal/core/domain"
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 )
 
-func newTestMetrics() *custprometheus.IndexerMetrics {
-	return custprometheus.NewIndexerMetrics(prometheus.NewRegistry())
+func newTestMetrics() *custmetrics.IndexerMetrics {
+	return custmetrics.NewIndexerMetrics(prometheus.NewRegistry())
 }
 
 type mockPubSub struct{}

@@ -13,7 +13,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/rest"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/ws"
-	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 	"github/ijusttookadnatest/evm-indexer/internal/server"
@@ -43,10 +43,10 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	reg := prometheus.NewRegistry()
-	metrics := prometheus.NewApiMetrics(reg)
-	prometheusServer := prometheus.NewPrometheusServer(reg, "2113")
-	go prometheus.RunPrometheusServer(ctx, prometheusServer)
+	reg := custmetrics.NewRegistry()
+	metrics := custmetrics.NewApiMetrics(reg)
+	metricsServer := custmetrics.NewPrometheusServer(reg, "2113")
+	go custmetrics.RunPrometheusServer(ctx, metricsServer)
 
 	pubsub := pubsub.NewRedisPubSub(redis)
 	queryRepo := repository.NewQueryRepository(db)

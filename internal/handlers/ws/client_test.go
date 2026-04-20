@@ -11,13 +11,13 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-func newTestApiMetrics() *custprometheus.ApiMetrics {
-	return custprometheus.NewApiMetrics(prometheus.NewRegistry())
+func newTestApiMetrics() *custmetrics.ApiMetrics {
+	return custmetrics.NewApiMetrics(prometheus.NewRegistry())
 }
 
 func testEntities() map[string]*Entity {

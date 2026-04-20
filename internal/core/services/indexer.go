@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
-	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	"github/ijusttookadnatest/evm-indexer/internal/metrics"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -12,10 +12,10 @@ type IndexerService struct {
 	repo    ports.IndexerRepository
 	fetcher ports.Fetcher
 	pubsub  ports.RedisPubSub
-	metrics *prometheus.IndexerMetrics
+	metrics *metrics.IndexerMetrics
 }
 
-func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub, metrics *prometheus.IndexerMetrics) *IndexerService {
+func NewIndexerService(repo ports.IndexerRepository, fetcher ports.Fetcher, pubsub ports.RedisPubSub, metrics *metrics.IndexerMetrics) *IndexerService {
 	return &IndexerService{repo: repo, fetcher: fetcher, pubsub: pubsub, metrics: metrics}
 }
 
