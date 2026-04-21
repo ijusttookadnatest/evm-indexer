@@ -1,4 +1,4 @@
-package prometheus
+package metrics
 
 import (
 	"context"
@@ -11,28 +11,28 @@ import (
 )
 
 type IndexerMetrics struct {
-	SyncedBlock prometheus.Counter
-	BackfillError   prometheus.Counter
-	ForwardfillError prometheus.Counter
-	BalancefillError prometheus.Counter
-	BackfillIsSyncing prometheus.Gauge
-	ForwardfillIsSyncing prometheus.Gauge
-	BalancefillIsSyncing prometheus.Gauge
-	BackfillLastBlockId prometheus.Gauge
-	ForwardfillLastBlockId prometheus.Gauge
-	DurationFetchingBlock prometheus.Histogram
-	DurationWritingBlockDB prometheus.Histogram
+	SyncedBlock             prometheus.Counter
+	BackfillError           prometheus.Counter
+	ForwardfillError        prometheus.Counter
+	BalancefillError        prometheus.Counter
+	BackfillIsSyncing       prometheus.Gauge
+	ForwardfillIsSyncing    prometheus.Gauge
+	BalancefillIsSyncing    prometheus.Gauge
+	BackfillLastBlockId     prometheus.Gauge
+	ForwardfillLastBlockId  prometheus.Gauge
+	DurationFetchingBlock   prometheus.Histogram
+	DurationWritingBlockDB  prometheus.Histogram
 	DurationProcessingBlock prometheus.Histogram
 }
 
 type ApiMetrics struct {
-	WsActiveConnection prometheus.Gauge
-	WsTotalMessageSent prometheus.Counter
-	RestProcessedRequest prometheus.Counter
-	GraphqlProcessedRequest prometheus.Counter
-	RestError prometheus.Counter
-	GraphqlError prometheus.Counter
-	DurationRestProcessingRequest prometheus.Histogram
+	WsActiveConnection               prometheus.Gauge
+	WsTotalMessageSent               prometheus.Counter
+	RestProcessedRequest             prometheus.Counter
+	GraphqlProcessedRequest          prometheus.Counter
+	RestError                        prometheus.Counter
+	GraphqlError                     prometheus.Counter
+	DurationRestProcessingRequest    prometheus.Histogram
 	DurationGraphqlProcessingRequest prometheus.Histogram
 }
 
@@ -143,7 +143,7 @@ func NewPrometheusServer(reg *prometheus.Registry, port string) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	return &http.Server{
-		Addr:   ":" + port,
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 }

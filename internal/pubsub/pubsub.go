@@ -12,18 +12,18 @@ type RedisPubSub struct {
 }
 
 func NewRedisPubSub(client *redis.Client) *RedisPubSub {
-	return &RedisPubSub{client:client}
+	return &RedisPubSub{client: client}
 }
 
-func (r *RedisPubSub) Subscribe(ctx context.Context, topic string) (<-chan[]byte, error) {
+func (r *RedisPubSub) Subscribe(ctx context.Context, topic string) (<-chan []byte, error) {
 	sub := r.client.Subscribe(ctx, topic)
-	
-	if _, err := sub.Receive(ctx) ; err != nil {
+
+	if _, err := sub.Receive(ctx); err != nil {
 		return nil, err
 	}
 
-	out := make(chan[]byte, 10)
-	
+	out := make(chan []byte, 10)
+
 	go func() {
 		ch := sub.Channel()
 		defer close(out)
@@ -31,16 +31,18 @@ func (r *RedisPubSub) Subscribe(ctx context.Context, topic string) (<-chan[]byte
 
 		for {
 			select {
-			case <-ctx.Done(): {
-				slog.Error("pubsub subscribe: context cancelled", "err", ctx.Err())
-				return
-			}
-			case msg := <-ch: {
-				if msg == nil {
+			case <-ctx.Done():
+				{
+					slog.Error("pubsub subscribe: context cancelled", "err", ctx.Err())
 					return
 				}
-				out <- []byte(msg.Payload)
-			}
+			case msg := <-ch:
+				{
+					if msg == nil {
+						return
+					}
+					out <- []byte(msg.Payload)
+				}
 			}
 		}
 	}()

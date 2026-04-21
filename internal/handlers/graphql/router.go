@@ -6,7 +6,7 @@ import (
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
 	"github/ijusttookadnatest/evm-indexer/internal/handlers/graphql/graph"
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -26,7 +26,7 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.ResponseWriter.WriteHeader(code)
 }
 
-func metricsMiddleware(metrics *custprometheus.ApiMetrics, next http.Handler) http.Handler {
+func metricsMiddleware(metrics *custmetrics.ApiMetrics, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rr := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
@@ -55,12 +55,12 @@ func NewHandler(service ports.QueryService) *handler.Server {
 	return srv
 }
 
-func NewRouter(service ports.QueryService, playgroundEnabled bool, metrics *custprometheus.ApiMetrics) http.Handler {
+func NewRouter(service ports.QueryService, playgroundEnabled bool, metrics *custmetrics.ApiMetrics) http.Handler {
 	mux := http.NewServeMux()
 	srv := NewHandler(service)
 
 	if playgroundEnabled {
-		mux.Handle("/playground", playground.Handler("GraphQL playground", "/graphql/playground"))
+		mux.Handle("/playground", playground.Handler("GraphQL playground", "/graphql/"))
 	}
 	mux.Handle("/", graph.Middleware(service, srv))
 

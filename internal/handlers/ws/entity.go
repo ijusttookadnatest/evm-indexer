@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 )
 
 type PayloadFilter struct {
@@ -22,16 +22,16 @@ type SubscriptionFilter struct {
 }
 
 type Entity struct {
-	clientsChan map[SubscriptionFilter][]chan[]byte
+	clientsChan map[SubscriptionFilter][]chan []byte
 	mu          *sync.RWMutex
 	incoming    <-chan []byte
 	name        string
-	metrics     *custprometheus.ApiMetrics
+	metrics     *custmetrics.ApiMetrics
 }
 
-func newEntity(name string, c <-chan []byte, metrics *custprometheus.ApiMetrics) *Entity {
+func newEntity(name string, c <-chan []byte, metrics *custmetrics.ApiMetrics) *Entity {
 	return &Entity{
-		clientsChan: make(map[SubscriptionFilter][]chan[]byte),
+		clientsChan: make(map[SubscriptionFilter][]chan []byte),
 		mu:          &sync.RWMutex{},
 		incoming:    c,
 		name:        name,

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,10 +14,10 @@ import (
 type Handler struct {
 	entities map[string]*Entity
 	ctx      context.Context
-	metrics  *custprometheus.ApiMetrics
+	metrics  *custmetrics.ApiMetrics
 }
 
-func NewHandler(ctx context.Context, entities map[string]*Entity, metrics *custprometheus.ApiMetrics) *Handler {
+func NewHandler(ctx context.Context, entities map[string]*Entity, metrics *custmetrics.ApiMetrics) *Handler {
 	return &Handler{ctx: ctx, entities: entities, metrics: metrics}
 }
 
@@ -57,7 +57,7 @@ func (handler *Handler) entitySubscription(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func NewRouter(ctx context.Context, pubsub ports.RedisPubSub, metrics *custprometheus.ApiMetrics) (http.Handler, error) {
+func NewRouter(ctx context.Context, pubsub ports.RedisPubSub, metrics *custmetrics.ApiMetrics) (http.Handler, error) {
 	blockIncoming, err := pubsub.Subscribe(ctx, "block")
 	if err != nil {
 		return nil, err

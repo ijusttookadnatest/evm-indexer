@@ -8,14 +8,13 @@ import (
 	"time"
 )
 
-
 type Server struct {
 	Server *http.Server
 }
 
 func NewHTTPServer(restHandler, wsHandler, graphqlHandler http.Handler, port string) *Server {
 	mux := http.NewServeMux()
-	
+
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "ok")
@@ -23,14 +22,14 @@ func NewHTTPServer(restHandler, wsHandler, graphqlHandler http.Handler, port str
 
 	mux.Handle("/api/", http.StripPrefix("/api", restHandler))
 	mux.Handle("/ws", http.StripPrefix("/ws", wsHandler))
-	mux.Handle("/graphql", graphqlHandler)
+	mux.Handle("/graphql/", http.StripPrefix("/graphql", graphqlHandler))
 
 	return &Server{
 		Server: &http.Server{
-			ReadTimeout: 10 * time.Second,
+			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
-			Addr: ":" + port,
-			Handler: mux,
+			Addr:         ":" + port,
+			Handler:      mux,
 		},
 	}
 }
@@ -42,22 +41,22 @@ func (s *Server) Run(ctx context.Context) error {
 	}()
 
 	select {
-        case err := <-errChan:
-            slog.Info("Server error: ", "err", err)
-        case <-ctx.Done():
-            slog.Info("Received shutdown signal: ","reason", ctx.Err())
-    }
+	case err := <-errChan:
+		slog.Info("Server error: ", "err", err)
+	case <-ctx.Done():
+		slog.Info("Received shutdown signal: ", "reason", ctx.Err())
+	}
 
-    slog.Info("Server is shutting down...")
+	slog.Info("Server is shutting down...")
 
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    if err := s.Server.Shutdown(ctx); err != nil {
-        slog.Info("Server shutdown error: ", "err", err)
-        return err
-    }
+	if err := s.Server.Shutdown(ctx); err != nil {
+		slog.Info("Server shutdown error: ", "err", err)
+		return err
+	}
 
-    slog.Info("Server exited properly")
+	slog.Info("Server exited properly")
 	return nil
 }

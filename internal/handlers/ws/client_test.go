@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-func newTestApiMetrics() *custprometheus.ApiMetrics {
-	return custprometheus.NewApiMetrics(prometheus.NewRegistry())
+func newTestApiMetrics() *custmetrics.ApiMetrics {
+	return custmetrics.NewApiMetrics(prometheus.NewRegistry())
 }
 
 func testEntities() map[string]*Entity {
@@ -172,7 +172,7 @@ func TestMessageWriterCleansUpOnWriteError(t *testing.T) {
 		close(done)
 	}()
 
-	conn.Close()                          // force write failure
+	conn.Close()                         // force write failure
 	client.outgoing <- []byte("trigger") // unblock messageWriter so it attempts the write
 
 	select {

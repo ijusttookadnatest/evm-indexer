@@ -12,7 +12,7 @@ import (
 	"github/ijusttookadnatest/evm-indexer/internal/config"
 	service "github/ijusttookadnatest/evm-indexer/internal/core/services"
 	"github/ijusttookadnatest/evm-indexer/internal/fetcher"
-	"github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 	"github/ijusttookadnatest/evm-indexer/internal/pubsub"
 	repository "github/ijusttookadnatest/evm-indexer/internal/repository/db"
 )
@@ -22,23 +22,21 @@ func run(ctx context.Context, reindex bool) error {
 	if err != nil {
 		return err
 	}
-	
+
 	db, err := repository.New(cfg.PostgresDSN)
 	if err != nil {
 		return err
 	}
-	if err := repository.RunUpMigrations(db) ; err != nil {
-		return err
-	}
+
 	redis, err := pubsub.New(cfg.RedisDSN)
 	if err != nil {
 		return err
 	}
 
-	reg := prometheus.NewRegistry()
-	metrics := prometheus.NewIndexerMetrics(reg)
-	prometheusServer := prometheus.NewPrometheusServer(reg, "2112")
-	go prometheus.RunPrometheusServer(ctx, prometheusServer)
+	reg := custmetrics.NewRegistry()
+	metrics := custmetrics.NewIndexerMetrics(reg)
+	metricsServer := custmetrics.NewPrometheusServer(reg, "2112")
+	go custmetrics.RunPrometheusServer(ctx, metricsServer)
 
 	pubsub := pubsub.NewRedisPubSub(redis)
 	indexerRepo := repository.NewIndexerRepository(db)

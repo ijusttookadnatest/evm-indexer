@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github/ijusttookadnatest/evm-indexer/internal/core/ports"
-	custprometheus "github/ijusttookadnatest/evm-indexer/internal/prometheus"
+	custmetrics "github/ijusttookadnatest/evm-indexer/internal/metrics"
 )
 
 type responseRecorder struct {
@@ -18,7 +18,7 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.ResponseWriter.WriteHeader(code)
 }
 
-func metricsMiddleware(metrics *custprometheus.ApiMetrics, next http.Handler) http.Handler {
+func metricsMiddleware(metrics *custmetrics.ApiMetrics, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rr := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
@@ -31,7 +31,7 @@ func metricsMiddleware(metrics *custprometheus.ApiMetrics, next http.Handler) ht
 	})
 }
 
-func NewRouter(service ports.QueryService, metrics *custprometheus.ApiMetrics) http.Handler {
+func NewRouter(service ports.QueryService, metrics *custmetrics.ApiMetrics) http.Handler {
 	mux := http.NewServeMux()
 	handler := NewHandler(service)
 
