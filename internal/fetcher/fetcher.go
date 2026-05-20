@@ -42,6 +42,17 @@ type Fetcher struct {
 	rateLimiter *rate.Limiter
 }
 
+func newLimiter(rpcRateLimit float64) *rate.Limiter {
+	if rpcRateLimit <= 0 {
+		return rate.NewLimiter(rate.Inf, 0)
+	}
+	burst := int(rpcRateLimit)
+	if burst < 1 {
+		burst = 1
+	}
+	return rate.NewLimiter(rate.Limit(rpcRateLimit), burst)
+}
+
 func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, error) {
 	clientHTTP, err := ethclient.Dial(urlHTTP)
 	if err != nil {
@@ -54,7 +65,7 @@ func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, e
 	return &Fetcher{
 		clientHTTP:  &ethWrapper{clientHTTP},
 		clientWS:    &ethWrapper{clientWS},
-		rateLimiter: rate.NewLimiter(rate.Limit(rpcRateLimit), 1),
+		rateLimiter: newLimiter(rpcRateLimit),
 	}, nil
 }
 
