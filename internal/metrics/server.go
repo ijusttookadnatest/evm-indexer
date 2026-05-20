@@ -23,6 +23,7 @@ type IndexerMetrics struct {
 	DurationFetchingBlock   prometheus.Histogram
 	DurationWritingBlockDB  prometheus.Histogram
 	DurationProcessingBlock prometheus.Histogram
+	RowsWritten             prometheus.Counter
 }
 
 type ApiMetrics struct {
@@ -88,6 +89,10 @@ func NewIndexerMetrics(reg prometheus.Registerer) *IndexerMetrics {
 			Name:    "indexer_block_processing_duration_seconds",
 			Help:    "Total duration of block processing (fetch + write) in seconds",
 			Buckets: prometheus.DefBuckets,
+		}),
+		RowsWritten: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "indexer_rows_written_total",
+			Help: "Total number of rows written to DB (blocks + txs + events)",
 		}),
 	}
 

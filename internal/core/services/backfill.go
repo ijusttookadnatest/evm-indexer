@@ -41,19 +41,15 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 		slog.Info("backfill: fetching batch", "from", curr, "to", end, "size", size)
 		processStart := time.Now()
 		g, gCtx := errgroup.WithContext(ctx)
+		fetchStart := time.Now()
 		for i := range size {
 			blockId := curr + uint64(i)
 			g.Go(func() error {
-				fetchStart := time.Now()
 				data, err := s.fetcher.FetchBlock(gCtx, blockId)
 				if err != nil {
 					slog.Error("backfill: fetch failed", "blockId", blockId, "err", err)
 					return err
 				}
-				if i == 0 {
-					slog.Info("DEBUG: data.tx:", "datatx", len(data.Txs), "Evnets", len(data.Events))
-				}
-				s.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
 				results[i] = data
 				return nil
 			})
@@ -62,6 +58,7 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 		if err := g.Wait(); err != nil {
 			return err
 		}
+		s.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
 
 		writeStart := time.Now()
 		if err := s.repo.BulkCreate(ctx, results); err != nil {
@@ -74,6 +71,11 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 			return err
 		}
 
+		totalRows := 0
+		for _, r := range results {
+			totalRows += 1 + len(r.Txs) + len(r.Events)
+		}
+		s.metrics.RowsWritten.Add(float64(totalRows))
 		s.metrics.BackfillLastBlockId.Set(float64(end))
 		s.metrics.SyncedBlock.Add(float64(len(results)))
 		slog.Info("backfill: progress", "curr", end, "targetId", targetId, "remaining", targetId-end)
