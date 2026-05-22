@@ -200,7 +200,7 @@ func TestFetchBlock(t *testing.T) {
 		},
 		{
 			name:    "CallContext error propagates",
-			client:  &mockEVMClient{callErr: errors.New("rpc timeout")},
+			client:  &mockEVMClient{callErr: &mockRPCError{code: -32601, msg: "method not found"}},
 			blockId: 100,
 			wantErr: true,
 		},
@@ -208,7 +208,7 @@ func TestFetchBlock(t *testing.T) {
 			name: "BlockReceipts error propagates",
 			client: &mockEVMClient{
 				block:       RPCBlock{Number: hexutil.Uint64(100)},
-				receiptsErr: errors.New("receipts unavailable"),
+				receiptsErr: &mockRPCError{code: -32601, msg: "method not found"},
 			},
 			blockId: 100,
 			wantErr: true,
