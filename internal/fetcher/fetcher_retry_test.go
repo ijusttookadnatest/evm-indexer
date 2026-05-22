@@ -62,16 +62,24 @@ type seqMockEVMClient struct {
 	callCount int
 }
 
-func (m *seqMockEVMClient) CallContext(_ context.Context, result interface{}, _ string, _ ...interface{}) error {
-	idx := m.callCount
-	if idx >= len(m.callErrs) {
-		idx = len(m.callErrs) - 1
+func (m *seqMockEVMClient) BatchCallContext(_ context.Context, b []rpc.BatchElem) error {
+	for i := range b {
+		switch b[i].Method {
+		case "eth_getBlockByNumber":
+			idx := m.callCount
+			if idx >= len(m.callErrs) {
+				idx = len(m.callErrs) - 1
+			}
+			m.callCount++
+			if err := m.callErrs[idx]; err != nil {
+				b[i].Error = err
+				continue
+			}
+			*(b[i].Result.(*RPCBlock)) = m.block
+		case "eth_getBlockReceipts":
+			*(b[i].Result.(*[]*types.Receipt)) = m.receipts
+		}
 	}
-	m.callCount++
-	if err := m.callErrs[idx]; err != nil {
-		return err
-	}
-	*(result.(*RPCBlock)) = m.block
 	return nil
 }
 
@@ -140,16 +148,25 @@ type seqMockReceiptsClient struct {
 	receiptsCount int
 }
 
-func (m *seqMockReceiptsClient) BlockReceipts(_ context.Context, _ rpc.BlockNumberOrHash) ([]*types.Receipt, error) {
-	idx := m.receiptsCount
-	if idx >= len(m.receiptsErrs) {
-		idx = len(m.receiptsErrs) - 1
+func (m *seqMockReceiptsClient) BatchCallContext(_ context.Context, b []rpc.BatchElem) error {
+	for i := range b {
+		switch b[i].Method {
+		case "eth_getBlockByNumber":
+			*(b[i].Result.(*RPCBlock)) = m.block
+		case "eth_getBlockReceipts":
+			idx := m.receiptsCount
+			if idx >= len(m.receiptsErrs) {
+				idx = len(m.receiptsErrs) - 1
+			}
+			m.receiptsCount++
+			if err := m.receiptsErrs[idx]; err != nil {
+				b[i].Error = err
+				continue
+			}
+			*(b[i].Result.(*[]*types.Receipt)) = m.mockEVMClient.receipts
+		}
 	}
-	m.receiptsCount++
-	if err := m.receiptsErrs[idx]; err != nil {
-		return nil, err
-	}
-	return m.mockEVMClient.receipts, nil
+	return nil
 }
 
 func TestFetchBlockReceipts_Retry(t *testing.T) {

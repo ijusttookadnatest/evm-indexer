@@ -23,34 +23,22 @@ type ethWrapper struct {
 	*ethclient.Client
 }
 
-type priorityKey struct{}
+type priorityKey struct {}
 
-func (w *ethWrapper) CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error {
-	return w.Client.Client().CallContext(ctx, result, method, args...)
+func (w *ethWrapper) BatchCallContext(ctx context.Context, b []rpc.BatchElem) error {
+	return w.Client.Client().BatchCallContext(ctx, b)
 }
 
 type EVMClient interface {
-	CallContext(ctx context.Context, result interface{}, method string, args ...interface{}) error
-	BlockReceipts(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]*types.Receipt, error)
+	BatchCallContext(ctx context.Context, b []rpc.BatchElem) error
 	BlockNumber(ctx context.Context) (uint64, error)
 	SubscribeNewHead(ctx context.Context, ch chan<- *types.Header) (ethereum.Subscription, error)
 }
 
 type Fetcher struct {
-	clientHTTP  EVMClient
-	clientWS    EVMClient
+	clientHTTP EVMClient
+	clientWS EVMClient
 	rateLimiter *rate.Limiter
-}
-
-func newLimiter(rpcRateLimit float64) *rate.Limiter {
-	if rpcRateLimit <= 0 {
-		return rate.NewLimiter(rate.Inf, 0)
-	}
-	burst := int(rpcRateLimit)
-	if burst < 1 {
-		burst = 1
-	}
-	return rate.NewLimiter(rate.Limit(rpcRateLimit), burst)
 }
 
 func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, error) {
@@ -63,9 +51,9 @@ func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, e
 		return nil, err
 	}
 	return &Fetcher{
-		clientHTTP:  &ethWrapper{clientHTTP},
-		clientWS:    &ethWrapper{clientWS},
-		rateLimiter: newLimiter(rpcRateLimit),
+		clientHTTP: &ethWrapper{clientHTTP},
+		clientWS: &ethWrapper{clientWS},
+		rateLimiter: rate.NewLimiter(rate.Limit(rpcRateLimit), 1),
 	}, nil
 }
 
@@ -112,13 +100,19 @@ func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEve
 		}
 
 		body := new(RPCBlock)
-		if err := b.clientHTTP.CallContext(ctx, body, "eth_getBlockByNumber", idHex, true); err != nil {
+		var receipts []*types.Receipt
+		batch := []rpc.BatchElem{
+			{Method: "eth_getBlockByNumber", Args: []interface{}{idHex, true}, Result: body},
+			{Method: "eth_getBlockReceipts", Args: []interface{}{idHex}, Result: &receipts},
+		}
+		if err := b.clientHTTP.BatchCallContext(ctx, batch); err != nil {
 			return domain.BlockTxsEvents{}, wrapRetryError(err)
 		}
-
-		receipts, err := b.clientHTTP.BlockReceipts(ctx, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(id)))
-		if err != nil {
-			return domain.BlockTxsEvents{}, wrapRetryError(err)
+		if batch[0].Error != nil {
+			return domain.BlockTxsEvents{}, wrapRetryError(batch[0].Error)
+		}
+		if batch[1].Error != nil {
+			return domain.BlockTxsEvents{}, wrapRetryError(batch[1].Error)
 		}
 
 		block := extractBlock(*body)

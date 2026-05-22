@@ -31,7 +31,7 @@ type mockSubscription struct {
 	errCh chan error
 }
 
-func (m *mockSubscription) Unsubscribe()      {}
+func (m *mockSubscription) Unsubscribe() {}
 func (m *mockSubscription) Err() <-chan error { return m.errCh }
 
 func (m *mockEVMClient) SubscribeNewHead(_ context.Context, ch chan<- *types.Header) (ethereum.Subscription, error) {
@@ -46,19 +46,24 @@ func (m *mockEVMClient) SubscribeNewHead(_ context.Context, ch chan<- *types.Hea
 	return &mockSubscription{errCh: m.subErrCh}, nil
 }
 
-func (m *mockEVMClient) CallContext(_ context.Context, result interface{}, _ string, _ ...interface{}) error {
-	if m.callErr != nil {
-		return m.callErr
+func (m *mockEVMClient) BatchCallContext(_ context.Context, b []rpc.BatchElem) error {
+	for i := range b {
+		switch b[i].Method {
+		case "eth_getBlockByNumber":
+			if m.callErr != nil {
+				b[i].Error = m.callErr
+				continue
+			}
+			*(b[i].Result.(*RPCBlock)) = m.block
+		case "eth_getBlockReceipts":
+			if m.receiptsErr != nil {
+				b[i].Error = m.receiptsErr
+				continue
+			}
+			*(b[i].Result.(*[]*types.Receipt)) = m.receipts
+		}
 	}
-	*(result.(*RPCBlock)) = m.block
 	return nil
-}
-
-func (m *mockEVMClient) BlockReceipts(_ context.Context, _ rpc.BlockNumberOrHash) ([]*types.Receipt, error) {
-	if m.receiptsErr != nil {
-		return nil, m.receiptsErr
-	}
-	return m.receipts, nil
 }
 
 func (m *mockEVMClient) BlockNumber(_ context.Context) (uint64, error) {
