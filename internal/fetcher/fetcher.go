@@ -50,10 +50,16 @@ func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, e
 	if err != nil {
 		return nil, err
 	}
+	var limiter *rate.Limiter
+	if rpcRateLimit <= 0 {
+		limiter = rate.NewLimiter(rate.Inf, 0)
+	} else {
+		limiter = rate.NewLimiter(rate.Limit(rpcRateLimit), 1)
+	}
 	return &Fetcher{
 		clientHTTP: &ethWrapper{clientHTTP},
 		clientWS: &ethWrapper{clientWS},
-		rateLimiter: rate.NewLimiter(rate.Limit(rpcRateLimit), 1),
+		rateLimiter: limiter,
 	}, nil
 }
 
@@ -106,12 +112,18 @@ func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEve
 			{Method: "eth_getBlockReceipts", Args: []interface{}{idHex}, Result: &receipts},
 		}
 		if err := b.clientHTTP.BatchCallContext(ctx, batch); err != nil {
+			fmt.Println("here1")
+			fmt.Println(err.Error())
 			return domain.BlockTxsEvents{}, wrapRetryError(err)
 		}
+		fmt.Println("here2")
 		if batch[0].Error != nil {
+			fmt.Println("batch 0")
+			fmt.Println(batch[0].Error.Error())
 			return domain.BlockTxsEvents{}, wrapRetryError(batch[0].Error)
 		}
 		if batch[1].Error != nil {
+			fmt.Println(batch[1].Error.Error())
 			return domain.BlockTxsEvents{}, wrapRetryError(batch[1].Error)
 		}
 
