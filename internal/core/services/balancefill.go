@@ -149,7 +149,8 @@ func (s *IndexerService) balancefill(ctx context.Context, lagFinalized int) erro
 			if err != nil {
 				return err
 			}
-			if blockCursor >= maxBlock-uint64(lagFinalized) {
+			lag := uint64(lagFinalized)
+			if maxBlock < lag || blockCursor >= maxBlock-lag {
 				select {
 				case <-time.After(BlockTimeValidation):
 				case <-ctx.Done():

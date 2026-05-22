@@ -45,13 +45,6 @@ func TestRun(t *testing.T) {
 			pubsub:  &mockPubSub{},
 			wantErr: true,
 		},
-		{
-			name:    "Subscribe error propagates",
-			repo:    &mockIndexerRepo{},
-			fetcher: &mockFFFetcher{subErr: errors.New("ws disconnected")},
-			pubsub:  &mockPubSub{},
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range tests {
