@@ -112,11 +112,9 @@ func (b *Fetcher) FetchBlock(ctx context.Context, id uint64) (domain.BlockTxsEve
 			{Method: "eth_getBlockReceipts", Args: []interface{}{idHex}, Result: &receipts},
 		}
 		if err := b.clientHTTP.BatchCallContext(ctx, batch); err != nil {
-			fmt.Println("here1")
 			fmt.Println(err.Error())
 			return domain.BlockTxsEvents{}, wrapRetryError(err)
 		}
-		fmt.Println("here2")
 		if batch[0].Error != nil {
 			fmt.Println("batch 0")
 			fmt.Println(batch[0].Error.Error())
