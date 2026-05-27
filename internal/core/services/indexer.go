@@ -26,15 +26,15 @@ func (i *IndexerService) Run(ctx context.Context, from uint64, concurrencyF int)
 	g, ctx := errgroup.WithContext(parentCtx)
 	backfillChan := make(chan struct{}, 1)
 
-	// g.Go(func() error {
-	// 	i.metrics.ForwardfillIsSyncing.Inc()
-	// 	err := i.forwardfill(ctx)
-	// 	if err != nil {
-	// 		i.metrics.ForwardfillError.Inc()
-	// 	}
-	// 	i.metrics.ForwardfillIsSyncing.Dec()
-	// 	return err
-	// })
+	g.Go(func() error {
+		i.metrics.ForwardfillIsSyncing.Inc()
+		err := i.forwardfill(ctx)
+		if err != nil {
+			i.metrics.ForwardfillError.Inc()
+		}
+		i.metrics.ForwardfillIsSyncing.Dec()
+		return err
+	})
 	targetId, err := i.fetcher.GetLastBlockId()
 	if err != nil {
 		cancel()
