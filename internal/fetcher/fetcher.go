@@ -23,7 +23,7 @@ type ethWrapper struct {
 	*ethclient.Client
 }
 
-type priorityKey struct {}
+type priorityKey struct{}
 
 func (w *ethWrapper) BatchCallContext(ctx context.Context, b []rpc.BatchElem) error {
 	return w.Client.Client().BatchCallContext(ctx, b)
@@ -36,8 +36,8 @@ type EVMClient interface {
 }
 
 type Fetcher struct {
-	clientHTTP EVMClient
-	clientWS EVMClient
+	clientHTTP  EVMClient
+	clientWS    EVMClient
 	rateLimiter *rate.Limiter
 }
 
@@ -57,8 +57,8 @@ func NewFetcher(urlHTTP string, urlWS string, rpcRateLimit float64) (*Fetcher, e
 		limiter = rate.NewLimiter(rate.Limit(rpcRateLimit), 1)
 	}
 	return &Fetcher{
-		clientHTTP: &ethWrapper{clientHTTP},
-		clientWS: &ethWrapper{clientWS},
+		clientHTTP:  &ethWrapper{clientHTTP},
+		clientWS:    &ethWrapper{clientWS},
 		rateLimiter: limiter,
 	}, nil
 }

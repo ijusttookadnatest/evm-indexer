@@ -31,7 +31,7 @@ type mockSubscription struct {
 	errCh chan error
 }
 
-func (m *mockSubscription) Unsubscribe() {}
+func (m *mockSubscription) Unsubscribe()      {}
 func (m *mockSubscription) Err() <-chan error { return m.errCh }
 
 func (m *mockEVMClient) SubscribeNewHead(_ context.Context, ch chan<- *types.Header) (ethereum.Subscription, error) {
