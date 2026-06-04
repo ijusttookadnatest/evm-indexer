@@ -24,6 +24,7 @@ type IndexerMetrics struct {
 	DurationWritingBlockDB  prometheus.Histogram
 	DurationProcessingBlock prometheus.Histogram
 	RowsWritten             prometheus.Counter
+	BatchSize               prometheus.Histogram
 }
 
 type ApiMetrics struct {
@@ -78,17 +79,22 @@ func NewIndexerMetrics(reg prometheus.Registerer) *IndexerMetrics {
 		DurationFetchingBlock: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:    "indexer_block_fetch_duration_seconds",
 			Help:    "Duration of block fetching from RPC in seconds",
-			Buckets: prometheus.DefBuckets,
+			Buckets: []float64{0.5, 1, 2, 5, 10, 20, 30, 60},
 		}),
 		DurationWritingBlockDB: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:    "indexer_block_db_write_duration_seconds",
 			Help:    "Duration of block writing to database in seconds",
-			Buckets: prometheus.DefBuckets,
+			Buckets: []float64{1, 5, 10, 30, 60, 120, 300},
 		}),
 		DurationProcessingBlock: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:    "indexer_block_processing_duration_seconds",
 			Help:    "Total duration of block processing (fetch + write) in seconds",
-			Buckets: prometheus.DefBuckets,
+			Buckets: []float64{1, 5, 10, 30, 60, 120, 300, 600},
+		}),
+		BatchSize: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:    "indexer_batch_size_blocks",
+			Help:    "Number of blocks per batch",
+			Buckets: []float64{1, 5, 10, 25, 50, 100, 200, 500},
 		}),
 		RowsWritten: promauto.With(reg).NewCounter(prometheus.CounterOpts{
 			Name: "indexer_rows_written_total",

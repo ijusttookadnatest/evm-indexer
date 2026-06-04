@@ -59,6 +59,7 @@ func (s *IndexerService) backfill(ctx context.Context, from uint64, targetId uin
 			return err
 		}
 		s.metrics.DurationFetchingBlock.Observe(time.Since(fetchStart).Seconds())
+		s.metrics.BatchSize.Observe(float64(size))
 
 		writeStart := time.Now()
 		if err := s.repo.BulkCreate(ctx, results); err != nil {
