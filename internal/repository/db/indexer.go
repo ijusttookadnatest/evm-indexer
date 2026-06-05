@@ -215,8 +215,23 @@ func (repo *IndexerRepository) ResetBackfillCursor(ctx context.Context) error {
 }
 
 func (repo *IndexerRepository) Delete(ctx context.Context, blockId uint64) error {
-	_, err := repo.db.ExecContext(ctx, `DELETE FROM blocks WHERE block_id = $1;`, blockId)
-	return err
+	tx, err := repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, query := range []string{
+		`DELETE FROM events WHERE block_id = $1;`,
+		`DELETE FROM transactions WHERE block_id = $1;`,
+		`DELETE FROM blocks WHERE block_id = $1;`,
+	} {
+		if _, err := tx.ExecContext(ctx, query, blockId); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (repo *IndexerRepository) GetBlockById(ctx context.Context, id uint64) (*domain.Block, error) {
